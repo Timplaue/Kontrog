@@ -11,6 +11,7 @@ composeBom = "2024.09.00"
 gmsVersion = "4.4.4"
 firebaseBomVersion = "32.7.4"
 crashlyticsVersion = "3.0.6"
+navigationComposeVersion = "2.7.5"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -31,6 +32,8 @@ firebase-crashlytics-gradlePlugin = { module = "com.google.firebase:firebase-cra
 firebase-perf = { module = "com.google.firebase:firebase-perf-ktx" }
 # 7. Analytics (Аналитика)
 firebase-analytics = { module = "com.google.firebase:firebase-analytics-ktx" }
+#Compose Navigation
+androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigationComposeVersion" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
