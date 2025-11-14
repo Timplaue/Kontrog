@@ -3,38 +3,31 @@ package com.example.kontrog.ui.screens
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
-import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.*
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.kontrog.AuthViewModel
 import com.example.kontrog.R
-
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import com.example.kontrog.ui.theme.KontrogRed
 
-// ----------------------------------------------------
-// 1. Маршруты (AuthRoutes)
-// ----------------------------------------------------
 sealed class AuthRoutes {
     data object SELECTION : AuthRoutes()
     data object LOGIN : AuthRoutes()
     data object REGISTER : AuthRoutes()
 }
 
-
-// ----------------------------------------------------
-// 2. Главный навигационный компонент (AuthScreen)
-// ----------------------------------------------------
 @Composable
 fun AuthScreen(
     onAuthSuccess: (String) -> Unit,
@@ -42,12 +35,13 @@ fun AuthScreen(
 ) {
     val authState by viewModel.authState.collectAsState()
 
-    // ПЕРВЫЙ ПЕРЕХОД: Если уже аутентифицирован, сразу выходим
+    // ПРОВЕРКА АУТЕНТИФИКАЦИИ
     if (authState.isAuthenticated && authState.role != null) {
         onAuthSuccess(authState.role!!)
         return
     }
 
+    // УПРАВЛЕНИЕ ТЕКУЩИМ ЭКРАНОМ
     var currentScreen by remember { mutableStateOf<AuthRoutes>(AuthRoutes.SELECTION) }
 
     when (currentScreen) {
@@ -71,9 +65,7 @@ fun AuthScreen(
     }
 }
 
-// ----------------------------------------------------
-// Composable: Выбор (Авторизация/Регистрация)
-// ----------------------------------------------------
+
 @Composable
 fun SelectionScreen(
     onLoginClick: () -> Unit,
@@ -84,7 +76,7 @@ fun SelectionScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
-            // 🔑 Применяем цвет фона из темы
+            // Применяем цвет фона из темы
             .background(MaterialTheme.colorScheme.background)
             .padding(horizontal = 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
@@ -150,318 +142,6 @@ fun SelectionScreen(
                 color = Color.White.copy(alpha = 0.7f), // Полупрозрачный белый
                 fontSize = 14.sp
             )
-        }
-    }
-}
-
-// ----------------------------------------------------
-// 4. Composable: Экран входа (Login)
-// ----------------------------------------------------
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun LoginScreen(
-    viewModel: AuthViewModel,
-    onBack: () -> Unit,
-    onRegisterClick: () -> Unit,
-    onLoginSuccess: (String) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-    val authState by viewModel.authState.collectAsState()
-
-    Scaffold(
-        modifier = modifier.fillMaxSize(),
-        topBar = {
-            CenterAlignedTopAppBar(
-                title = {
-                    Text(
-                        text = "ДАННЫЕ ДЛЯ ВХОДА",
-                        color = MaterialTheme.colorScheme.onBackground,
-                        fontWeight = FontWeight.Bold
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Назад",
-                            tint = MaterialTheme.colorScheme.onBackground
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background
-                )
-            )
-        },
-        containerColor = MaterialTheme.colorScheme.background
-    ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .padding(horizontal = 24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Spacer(Modifier.height(32.dp))
-
-            KontrogOutlinedTextField(
-                value = email,
-                onValueChange = { email = it },
-                label = "ЛОГИН",
-                keyboardType = KeyboardType.Email
-            )
-            Spacer(Modifier.height(24.dp))
-            KontrogOutlinedTextField(
-                value = password,
-                onValueChange = { password = it },
-                label = "ПАРОЛЬ",
-                isPassword = true
-            )
-
-            Spacer(Modifier.weight(1f))
-
-            Button(
-                onClick = { viewModel.signIn(email, password) },
-                enabled = !authState.isLoading,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp)
-                    .padding(bottom = 16.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = KontrogRed,
-                    contentColor = Color.White
-                )
-            ) {
-                if (authState.isLoading) {
-                    CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
-                } else {
-                    Text(
-                        text = "ПРОДОЛЖИТЬ",
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                }
-            }
-
-            TextButton(
-                onClick = onRegisterClick,
-                modifier = Modifier.padding(bottom = 40.dp)
-            ) {
-                Text(
-                    text = "ПЕРВЫЙ ВХОД?",
-                    color = Color.White.copy(alpha = 0.7f),
-                    fontSize = 14.sp
-                )
-            }
-        }
-    }
-
-    LaunchedEffect(authState.isAuthenticated) {
-        if (authState.isAuthenticated) {
-            onLoginSuccess(authState.role ?: "user")
-        }
-    }
-}
-
-
-// ----------------------------------------------------
-// 5. Компонент: Стилизованное поле ввода (TextField)
-// ----------------------------------------------------
-@Composable
-fun KontrogOutlinedTextField(
-    value: String,
-    onValueChange: (String) -> Unit,
-    label: String,
-    modifier: Modifier = Modifier,
-    isPassword: Boolean = false,
-    keyboardType: KeyboardType = KeyboardType.Text
-) {
-    OutlinedTextField(
-        value = value,
-        onValueChange = onValueChange,
-        label = {
-            Text(
-                text = label,
-                fontSize = 12.sp,
-                color = Color.Gray
-            )
-        },
-        modifier = modifier.fillMaxWidth(),
-        singleLine = true,
-        colors = OutlinedTextFieldDefaults.colors(
-            focusedContainerColor = MaterialTheme.colorScheme.background,
-            unfocusedContainerColor = MaterialTheme.colorScheme.background,
-            focusedBorderColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f),
-            unfocusedBorderColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f),
-            focusedTextColor = MaterialTheme.colorScheme.onBackground,
-            unfocusedTextColor = MaterialTheme.colorScheme.onBackground,
-            cursorColor = KontrogRed
-        ),
-        visualTransformation = if (isPassword) PasswordVisualTransformation() else VisualTransformation.None,
-        keyboardOptions = KeyboardOptions(keyboardType = keyboardType)
-    )
-}
-
-// ----------------------------------------------------
-// 6. Composable: Экран регистрации
-// ----------------------------------------------------
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun RegistrationScreen(
-    viewModel: AuthViewModel,
-    onBack: () -> Unit,
-    onRegistrationSuccess: (String) -> Unit
-) {
-    // Состояние для полей ввода
-    var email by remember { mutableStateOf("") }
-    var phone by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-    var confirmPassword by remember { mutableStateOf("") }
-
-    // Состояние для ошибок
-    var passwordError by remember { mutableStateOf<String?>(null) }
-    val authState by viewModel.authState.collectAsState()
-
-    Scaffold(
-        modifier = Modifier.fillMaxSize(),
-        topBar = {
-            CenterAlignedTopAppBar(
-                title = {
-                    Text(
-                        text = "СОЗДАНИЕ АККАУНТА",
-                        color = MaterialTheme.colorScheme.onBackground,
-                        fontWeight = FontWeight.Bold
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Назад",
-                            tint = MaterialTheme.colorScheme.onBackground
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background
-                )
-            )
-        },
-        containerColor = MaterialTheme.colorScheme.background
-    ) { paddingValues ->
-
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .padding(horizontal = 24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-
-            // Заголовок "РЕГИСТРАЦИЯ"
-            Text(
-                text = "РЕГИСТРАЦИЯ",
-                fontSize = 28.sp,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onBackground,
-                modifier = Modifier.padding(top = 32.dp, bottom = 32.dp)
-            )
-
-            // Поле Email
-            KontrogOutlinedTextField(
-                value = email,
-                onValueChange = { email = it },
-                label = "EMAIL (ЛОГИН)",
-                keyboardType = KeyboardType.Email
-            )
-            Spacer(Modifier.height(24.dp))
-
-            // Поле Номер телефона
-            KontrogOutlinedTextField(
-                value = phone,
-                onValueChange = { phone = it },
-                label = "НОМЕР ТЕЛЕФОНА",
-                keyboardType = KeyboardType.Phone // 🔑 Клавиатура для номера
-            )
-            Spacer(Modifier.height(24.dp))
-
-            // Поле Пароль
-            KontrogOutlinedTextField(
-                value = password,
-                onValueChange = { password = it; passwordError = null },
-                label = "ПАРОЛЬ",
-                isPassword = true
-            )
-            Spacer(Modifier.height(24.dp))
-
-            // Поле Повторите Пароль
-            KontrogOutlinedTextField(
-                value = confirmPassword,
-                onValueChange = { confirmPassword = it; passwordError = null },
-                label = "ПОВТОРИТЕ ПАРОЛЬ",
-                isPassword = true
-            )
-
-            // Отображение общей ошибки, если есть
-            if (authState.error != null) {
-                Text(
-                    text = authState.error!!,
-                    color = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.padding(top = 8.dp)
-                )
-            }
-            // Отображение ошибки совпадения паролей
-            if (passwordError != null) {
-                Text(
-                    text = passwordError!!,
-                    color = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.padding(top = 8.dp)
-                )
-            }
-
-            Spacer(Modifier.weight(1f))
-
-            // Кнопка "ЗАРЕГИСТРИРОВАТЬСЯ"
-            Button(
-                onClick = {
-                    if (password != confirmPassword) {
-                        passwordError = "Пароли не совпадают!"
-                    } else if (email.isBlank() || phone.isBlank() || password.isBlank()) {
-                        passwordError = "Заполните все поля!"
-                    } else {
-                        // Вызываем логику регистрации в ViewModel
-                        viewModel.register(email, password, phone)
-                    }
-                },
-                enabled = !authState.isLoading,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp)
-                    .padding(bottom = 40.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = KontrogRed,
-                    contentColor = Color.White
-                )
-            ) {
-                if (authState.isLoading) {
-                    CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
-                } else {
-                    Text(
-                        text = "ЗАРЕГИСТРИРОВАТЬСЯ",
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                }
-            }
-        }
-    }
-
-    // Обработка успешной регистрации
-    LaunchedEffect(authState.isAuthenticated) {
-        if (authState.isAuthenticated) {
-            onRegistrationSuccess(authState.role ?: "user")
         }
     }
 }
