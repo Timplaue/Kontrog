@@ -2,6 +2,8 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.gms)
+    alias(libs.plugins.crashlytics)
 }
 
 android {
@@ -39,6 +41,33 @@ android {
 }
 
 dependencies {
+
+    // BoM
+    implementation(platform(libs.firebase.bom))
+
+    // Firestore
+    implementation(libs.firebase.firestore)
+
+    // Auth
+    implementation(libs.firebase.auth)
+
+    // Messaging (FCM)
+    implementation(libs.firebase.messaging)
+
+    // Storage
+    implementation(libs.firebase.storage)
+
+    // Crashlytics
+    implementation(libs.firebase.crashlytics)
+
+    // Performance Monitoring
+    implementation(libs.firebase.perf)
+
+    // Analytics
+    implementation(libs.firebase.analytics)
+
+    implementation(libs.androidx.navigation.compose)
+
     implementation libs.androidx.core.ktx
     implementation libs.androidx.lifecycle.runtime.ktx
     implementation libs.androidx.activity.compose

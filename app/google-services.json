@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "980177210554",
+    "project_id": "kontrog-39332",
+    "storage_bucket": "kontrog-39332.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:980177210554:android:c39f5bd6271bd3c69fc683",
+        "android_client_info": {
+          "package_name": "com.example.kontrog"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBIViYCdmTJkbQLc1C4VSm3vQKBvMeAduc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
