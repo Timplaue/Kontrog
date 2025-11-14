@@ -305,46 +305,163 @@ fun KontrogOutlinedTextField(
 }
 
 // ----------------------------------------------------
-// 6. Composable: Экран регистрации (ЗАГЛУШКА)
+// 6. Composable: Экран регистрации
 // ----------------------------------------------------
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RegistrationScreen(
     viewModel: AuthViewModel,
     onBack: () -> Unit,
-    onRegistrationSuccess: (String) -> Unit // Новый параметр
+    onRegistrationSuccess: (String) -> Unit
 ) {
-    // ⚠️ Это заглушка. Мы будем ее заполнять следующим шагом.
+    // Состояние для полей ввода
+    var email by remember { mutableStateOf("") }
+    var phone by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+    var confirmPassword by remember { mutableStateOf("") }
+
+    // Состояние для ошибок
+    var passwordError by remember { mutableStateOf<String?>(null) }
+    val authState by viewModel.authState.collectAsState()
+
     Scaffold(
+        modifier = Modifier.fillMaxSize(),
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text("РЕГИСТРАЦИЯ", fontWeight = FontWeight.Bold) },
+                title = {
+                    Text(
+                        text = "СОЗДАНИЕ АККАУНТА",
+                        color = MaterialTheme.colorScheme.onBackground,
+                        fontWeight = FontWeight.Bold
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Назад")
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Назад",
+                            tint = MaterialTheme.colorScheme.onBackground
+                        )
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background)
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.background
+                )
             )
         },
         containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+                .padding(horizontal = 24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text("Экран регистрации пока пуст!", color = Color.White)
-            Spacer(Modifier.height(16.dp))
-            Button(onClick = {
-                // Временный вызов для проверки навигации
-                onRegistrationSuccess("temp_user")
-            }) {
-                Text("Проверить успешную регистрацию")
+
+            // Заголовок "РЕГИСТРАЦИЯ"
+            Text(
+                text = "РЕГИСТРАЦИЯ",
+                fontSize = 28.sp,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onBackground,
+                modifier = Modifier.padding(top = 32.dp, bottom = 32.dp)
+            )
+
+            // Поле Email
+            KontrogOutlinedTextField(
+                value = email,
+                onValueChange = { email = it },
+                label = "EMAIL (ЛОГИН)",
+                keyboardType = KeyboardType.Email
+            )
+            Spacer(Modifier.height(24.dp))
+
+            // Поле Номер телефона
+            KontrogOutlinedTextField(
+                value = phone,
+                onValueChange = { phone = it },
+                label = "НОМЕР ТЕЛЕФОНА",
+                keyboardType = KeyboardType.Phone // 🔑 Клавиатура для номера
+            )
+            Spacer(Modifier.height(24.dp))
+
+            // Поле Пароль
+            KontrogOutlinedTextField(
+                value = password,
+                onValueChange = { password = it; passwordError = null },
+                label = "ПАРОЛЬ",
+                isPassword = true
+            )
+            Spacer(Modifier.height(24.dp))
+
+            // Поле Повторите Пароль
+            KontrogOutlinedTextField(
+                value = confirmPassword,
+                onValueChange = { confirmPassword = it; passwordError = null },
+                label = "ПОВТОРИТЕ ПАРОЛЬ",
+                isPassword = true
+            )
+
+            // Отображение общей ошибки, если есть
+            if (authState.error != null) {
+                Text(
+                    text = authState.error!!,
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.padding(top = 8.dp)
+                )
             }
+            // Отображение ошибки совпадения паролей
+            if (passwordError != null) {
+                Text(
+                    text = passwordError!!,
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.padding(top = 8.dp)
+                )
+            }
+
+            Spacer(Modifier.weight(1f))
+
+            // Кнопка "ЗАРЕГИСТРИРОВАТЬСЯ"
+            Button(
+                onClick = {
+                    if (password != confirmPassword) {
+                        passwordError = "Пароли не совпадают!"
+                    } else if (email.isBlank() || phone.isBlank() || password.isBlank()) {
+                        passwordError = "Заполните все поля!"
+                    } else {
+                        // Вызываем логику регистрации в ViewModel
+                        viewModel.register(email, password, phone)
+                    }
+                },
+                enabled = !authState.isLoading,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp)
+                    .padding(bottom = 40.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = KontrogRed,
+                    contentColor = Color.White
+                )
+            ) {
+                if (authState.isLoading) {
+                    CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
+                } else {
+                    Text(
+                        text = "ЗАРЕГИСТРИРОВАТЬСЯ",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+            }
+        }
+    }
+
+    // Обработка успешной регистрации
+    LaunchedEffect(authState.isAuthenticated) {
+        if (authState.isAuthenticated) {
+            onRegistrationSuccess(authState.role ?: "user")
         }
     }
 }

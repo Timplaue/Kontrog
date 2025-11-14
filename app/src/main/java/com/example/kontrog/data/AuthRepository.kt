@@ -18,9 +18,10 @@ class AuthRepository {
      * @param userId Уникальный идентификатор пользователя из Firebase Authentication.
      * @param email Email пользователя.
      */
-    suspend fun createUserRecord(userId: String, email: String) {
+    suspend fun createUserRecord(userId: String, email: String, phone: String) {
         val userRoleData = hashMapOf(
             "email" to email,
+            "phone" to phone,
             "role" to "user", // Роль по умолчанию
             "createdAt" to com.google.firebase.firestore.FieldValue.serverTimestamp()
         )

@@ -43,7 +43,7 @@ class AuthViewModel(
     }
 
     // ================== РЕГИСТРАЦИЯ ==================
-    fun register(email: String, password: String) = viewModelScope.launch {
+    fun register(email: String, password: String, phone: String) = viewModelScope.launch {
         _authState.value = _authState.value.copy(isLoading = true, error = null)
 
         try {
@@ -51,7 +51,7 @@ class AuthViewModel(
             val userId = result.user?.uid ?: throw Exception("UID is null after registration.")
 
             // 🔑 1. Вызываем метод репозитория для создания записи в Firestore
-            repository.createUserRecord(userId, email)
+            repository.createUserRecord(userId, email, phone)
 
             _authState.value = AuthState(isAuthenticated = true, role = "user", isLoading = false)
 
