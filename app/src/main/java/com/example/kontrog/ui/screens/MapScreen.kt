@@ -5,41 +5,51 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLifecycleOwner // 👈 ЭТОТ ИМПОРТ НУЖЕН
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.yandex.mapkit.MapKitFactory
 import com.yandex.mapkit.mapview.MapView
 import com.yandex.mapkit.geometry.Point
-import com.yandex.mapkit.map.PlacemarkMapObject // 👈 Нужен для работы с Placemark
-import com.yandex.mapkit.map.MapObjectTapListener // 👈 Нужен для работы с addTapListener
-import com.yandex.runtime.image.ImageProvider // 👈 Нужен, если будете задавать иконки
+import com.yandex.mapkit.map.IconStyle
+import com.yandex.runtime.image.ImageProvider
+import com.yandex.mapkit.Animation
+import com.yandex.mapkit.map.MapObjectCollection
+import com.example.kontrog.R
+import android.util.Log
 
-/**
- * 🗺️ Экран с картой, использующий Yandex MapKit.
- */
 @Composable
 fun MapScreen(
     rootNavController: NavController,
-    viewModel: MapViewModel = viewModel() // Инициализация ViewModel
+    viewModel: MapViewModel = viewModel()
 ) {
     val context = LocalContext.current
     val buildings by viewModel.buildings.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
 
+    // Логируем полученные данные для отладки
+    LaunchedEffect(buildings) {
+        Log.d("MapScreen", "Buildings received: ${buildings.size}")
+        buildings.forEachIndexed { index, building ->
+            Log.d("MapScreen", "Building $index: ${building.address}, " +
+                    "lat=${building.latitude}, lng=${building.longitude}")
+        }
+    }
+
     val mapView = remember {
         MapView(context).apply {
-            // Установка начальной камеры на некую центральную точку
+            // Начальная позиция - Москва
             map.move(
                 com.yandex.mapkit.map.CameraPosition(
-                    Point(55.751244, 37.617494), // Москва
-                    11.0f,
+                    Point(55.751244, 37.617494),
+                    10.0f,
                     0.0f,
                     0.0f
                 )
@@ -47,62 +57,81 @@ fun MapScreen(
         }
     }
 
-    Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-        AndroidView(
-            modifier = Modifier.fillMaxSize(),
-            factory = { mapView },
-            update = { view ->
-                if (!isLoading && buildings.isNotEmpty()) {
-                    // 1. Очищаем старые маркеры перед обновлением
-                    view.map.mapObjects.clear()
+    val markersCollection = remember {
+        mapView.map.mapObjects.addCollection()
+    }
 
-                    val mapObjects = view.map.mapObjects.addCollection()
+    // Обновляем маркеры при изменении данных из Firebase
+    LaunchedEffect(buildings) {
+        if (buildings.isNotEmpty()) {
+            Log.d("MapScreen", "Updating markers for ${buildings.size} buildings")
 
-                    // 2. Добавляем новые маркеры
-                    buildings.forEach { building ->
-                        if (building.latitude != 0.0 && building.longitude != 0.0) {
-                            val markerPoint = Point(building.latitude, building.longitude)
+            // Очищаем старые маркеры
+            markersCollection.clear()
 
-                            // Добавляем маркер (Placemark)
-                            val placemark = mapObjects.addPlacemark().apply {
-                                geometry = markerPoint
-                                // Временный маркер: используйте собственный ImageProvider для иконок
-                                //
-                                // Если нет своей иконки, можно использовать стандартную.
-                                isDraggable = false
-                                // Устанавливаем иконку (можно использовать растровое изображение)
-                                // icon = ImageProvider.fromResource(context, R.drawable.ic_map_marker)
-                            }
+            // Создаем иконку из ресурсов
+            val icon = ImageProvider.fromResource(context, R.drawable.placementhome)
 
-                            // 3. Добавляем обработчик нажатия
-                            placemark.addTapListener { _, _ ->
-                                // TODO: Открыть BottomSheet или диалог с деталями здания
-                                true
-                            }
+            // Добавляем маркеры для каждого здания
+            buildings.forEach { building ->
+                // Проверяем, что координаты валидны
+                if (building.latitude != 0.0 && building.longitude != 0.0) {
+                    val point = Point(building.latitude, building.longitude)
+
+                    val placemark = markersCollection.addPlacemark(point)
+                    placemark.setIcon(icon)
+                    placemark.setIconStyle(
+                        IconStyle().apply {
+                            scale = 1.5f // Уменьшил масштаб для лучшего отображения
+                            anchor = android.graphics.PointF(0.5f, 1.0f) // Якорь внизу иконки
                         }
-                    }
+                    )
 
-                    // 4. Опционально: центрируем камеру на первом объекте или на кластере
-                    buildings.firstOrNull()?.let { firstBuilding ->
-                        view.map.move(
-                            com.yandex.mapkit.map.CameraPosition(
-                                Point(firstBuilding.latitude, firstBuilding.longitude),
-                                14.0f, 0.0f, 0.0f
-                            ),
-                            com.yandex.mapkit.Animation(com.yandex.mapkit.Animation.Type.SMOOTH, 1f),
-                            null
-                        )
-                    }
+                    Log.d("MapScreen", "Added marker at: ${building.latitude}, ${building.longitude}")
+                } else {
+                    Log.w("MapScreen", "Invalid coordinates for building: ${building.address}")
                 }
             }
+
+            // Если есть здания с валидными координатами, центрируем карту на первом
+            val validBuildings = buildings.filter { it.latitude != 0.0 && it.longitude != 0.0 }
+            if (validBuildings.isNotEmpty()) {
+                val firstBuilding = validBuildings.first()
+                mapView.map.move(
+                    com.yandex.mapkit.map.CameraPosition(
+                        Point(firstBuilding.latitude, firstBuilding.longitude),
+                        15.0f,
+                        0.0f,
+                        0.0f
+                    ),
+                    Animation(Animation.Type.SMOOTH, 1f),
+                    null
+                )
+                Log.d("MapScreen", "Camera moved to: ${firstBuilding.latitude}, ${firstBuilding.longitude}")
+            }
+        } else {
+            Log.d("MapScreen", "No buildings to display")
+        }
+    }
+
+    Surface(
+        modifier = Modifier.fillMaxSize(),
+        color = MaterialTheme.colorScheme.background
+    ) {
+        AndroidView(
+            modifier = Modifier.fillMaxSize(),
+            factory = { mapView }
         )
     }
 
-    // Обработка жизненного цикла MapView:
+    // Управление жизненным циклом карты
     DisposableEffect(LocalLifecycleOwner.current) {
+        Log.d("MapScreen", "Starting map")
         MapKitFactory.getInstance().onStart()
         mapView.onStart()
+
         onDispose {
+            Log.d("MapScreen", "Stopping map")
             mapView.onStop()
             MapKitFactory.getInstance().onStop()
         }
