@@ -21,6 +21,7 @@ import com.example.kontrog.ui.theme.KontrogRed
 fun RegistrationScreen(
     viewModel: AuthViewModel,
     onBack: () -> Unit,
+    onLoginClick: () -> Unit,
     onRegistrationSuccess: (String) -> Unit
 ) {
     // Состояние для полей ввода
@@ -69,20 +70,11 @@ fun RegistrationScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
 
-            // Заголовок "РЕГИСТРАЦИЯ"
-            Text(
-                text = "РЕГИСТРАЦИЯ",
-                fontSize = 28.sp,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onBackground,
-                modifier = Modifier.padding(top = 32.dp, bottom = 32.dp)
-            )
-
             // Поле Email
             KontrogOutlinedTextField(
                 value = email,
                 onValueChange = { email = it },
-                label = "EMAIL (ЛОГИН)",
+                label = "EMAIL",
                 keyboardType = KeyboardType.Email
             )
             Spacer(Modifier.height(24.dp))
@@ -159,11 +151,21 @@ fun RegistrationScreen(
                     )
                 } else {
                     Text(
-                        text = "ЗАРЕГИСТРИРОВАТЬСЯ",
+                        text = "СОЗДАТЬ АККАУНТ",
                         fontSize = 16.sp,
                         fontWeight = FontWeight.SemiBold
                     )
                 }
+            }
+            TextButton(
+                onClick = onLoginClick,
+                modifier = Modifier.padding(bottom = 40.dp)
+            ) {
+                Text(
+                    text = "УЖЕ ЕСТЬ АККАУНТ?",
+                    color = Color.White.copy(alpha = 0.7f),
+                    fontSize = 14.sp
+                )
             }
         }
     }

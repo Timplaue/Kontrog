@@ -60,6 +60,7 @@ fun AuthScreen(
         AuthRoutes.REGISTER -> RegistrationScreen(
             viewModel = viewModel,
             onBack = { currentScreen = AuthRoutes.SELECTION },
+            onLoginClick = { currentScreen = AuthRoutes.LOGIN },
             onRegistrationSuccess = onAuthSuccess
         )
     }
