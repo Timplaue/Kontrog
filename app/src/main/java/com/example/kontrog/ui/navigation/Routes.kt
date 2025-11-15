@@ -12,8 +12,8 @@ sealed class BottomNavItem(
     object Profile : BottomNavItem("profile_route", Icons.Default.Person, "Аккаунт")
     object Main : BottomNavItem("main_route", Icons.Default.Home, "Главный")
     object Object : BottomNavItem("object_route", Icons.Default.LocationOn, "Объект")
-    object Map : BottomNavItem("map_route", Icons.Default.Person, "Карта")
-    object Docs : BottomNavItem("docs_route", Icons.Default.Person, "Документы")
+    object Map : BottomNavItem("map_route", Icons.Default.Map, "Карта")
+    object Docs : BottomNavItem("docs_route", Icons.Default.Description, "Документы")
 }
 
 /** Определяет экраны, которые не являются частью нижнего меню (отдельные экраны) */

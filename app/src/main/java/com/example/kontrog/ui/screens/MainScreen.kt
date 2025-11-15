@@ -18,16 +18,6 @@ import androidx.navigation.NavGraph.Companion.findStartDestination
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
 
-// --- Логика Firebase Auth (Оставлена для кнопки выхода) ---
-fun signOutUser() {
-    Firebase.auth.signOut()
-}
-// --------------------------------------------------------
-
-/**
- * 🔑 Основной компонент для Главного Экрана
- * Принимает NavController для навигации между экранами (Notifications/Profile).
- */
 @Composable
 fun MainScreen(navController: NavController) { // 🔑 NavController теперь здесь
     // Здесь мы по умолчанию будем показывать контент пользователя
@@ -136,9 +126,5 @@ fun UserDashboardContent() {
         Text("Привет, Пользователь! (Главный экран)")
         Spacer(modifier = Modifier.height(16.dp))
         Text("Здесь будет дашборд с огнетушителями и журналами.", textAlign = TextAlign.Center)
-        Spacer(modifier = Modifier.height(16.dp))
-        Button(onClick = { signOutUser() }) {
-            Text("Выйти из аккаунта (Logout)")
-        }
     }
 }
