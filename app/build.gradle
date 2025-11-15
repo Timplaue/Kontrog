@@ -48,6 +48,8 @@ dependencies {
 
     ksp "androidx.room:room-compiler:$room_version"
 
+    implementation("com.google.firebase:firebase-auth-ktx")
+
     // Compose Navigation
     implementation(libs.androidx.navigation.compose)
 

@@ -7,10 +7,12 @@ import com.google.firebase.firestore.DocumentId
  * Соответствует требованиям ТЗ: Название, ИНН, Адрес, возможность множественности.
  */
 data class Organization(
-    @DocumentId // Указывает, что это поле должно быть заполнено ID документа из Firestore
+    @DocumentId
     val id: String = "",
-    val name: String = "", // Название юридического лица
-    val inn: String = "",  // ИНН
-    val address: String = "", // Адрес организации
-    val ownerUid: String = "" // ID пользователя, создавшего организацию (для безопасности)
+    val name: String = "",
+    val inn: String = "",
+    val address: String = "",
+    val ownerUid: String = "",
+    val creationDate: Long = 0,
+    val isActive: Boolean = true
 )

@@ -1,4 +1,4 @@
-package com.example.kontrog.ui.screens
+package com.example.kontrog.ui.screens.auth
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons

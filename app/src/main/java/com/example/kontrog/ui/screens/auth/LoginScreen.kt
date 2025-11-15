@@ -1,4 +1,4 @@
-package com.example.kontrog.ui.screens
+package com.example.kontrog.ui.screens.auth
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
@@ -15,6 +15,7 @@ import androidx.compose.ui.unit.sp
 import com.example.kontrog.AuthViewModel
 import com.example.kontrog.ui.components.KontrogOutlinedTextField
 import com.example.kontrog.ui.theme.KontrogRed
+import android.util.Log
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -119,7 +120,13 @@ fun LoginScreen(
 
     LaunchedEffect(authState.isAuthenticated) {
         if (authState.isAuthenticated) {
-            onLoginSuccess(authState.role ?: "user")
+            val phone = viewModel.authState.value.phoneNumber
+
+            if (phone != null) {
+                onLoginSuccess(phone)
+            } else {
+                Log.e("LoginScreen", "User authenticated but phone number is null.")
+            }
         }
     }
 }
