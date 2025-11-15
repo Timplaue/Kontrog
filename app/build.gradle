@@ -51,6 +51,8 @@ dependencies {
     // Compose Navigation
     implementation(libs.androidx.navigation.compose)
 
+    implementation 'com.yandex.android:maps.mobile:4.25.0-lite'
+
     // Compose
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.material3)

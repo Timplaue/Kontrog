@@ -90,4 +90,12 @@ class FireSafetyRepositoryImpl(
         db.collection(BUILDINGS_COLLECTION).document(buildingId).delete().await()
         // 💡 Важно: В реальном приложении здесь нужно также удалить все связанные Огнетушители!
     }
+
+    override fun getAllUserBuildings(ownerUid: String): Flow<List<Building>> {
+        return db.collection(BUILDINGS_COLLECTION)
+            .snapshots()
+            .map { snapshot ->
+                snapshot.documents.mapNotNull { it.toObject<Building>() }
+            }
+    }
 }

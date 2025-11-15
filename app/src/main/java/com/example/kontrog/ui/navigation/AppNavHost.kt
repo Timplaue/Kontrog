@@ -13,6 +13,7 @@ import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.navigation.compose.*
+import com.example.kontrog.ui.screens.MapScreen
 import com.example.kontrog.ui.screens.ProfileScreen
 
 /* ------------------------------ ROUTES ------------------------------ */
@@ -103,7 +104,7 @@ fun AppNavHost(rootNavController: NavHostController) {
         ) {
             composable(AppRoute.Main.route) { MainScreen(rootNavController) }
             composable(AppRoute.Object.route) { StubScreen("Объект") }
-            composable(AppRoute.Map.route) { StubScreen("Карта") }
+            composable(AppRoute.Map.route) { MapScreen(rootNavController) }
             composable(AppRoute.Docs.route) { StubScreen("Документы") }
             composable(AppRoute.Profile.route) { ProfileScreen(rootNavController) }
         }

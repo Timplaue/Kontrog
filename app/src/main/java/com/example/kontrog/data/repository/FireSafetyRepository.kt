@@ -44,4 +44,6 @@ interface FireSafetyRepository {
      * Удаляет здание по ID.
      */
     suspend fun deleteBuilding(buildingId: String)
+
+    fun getAllUserBuildings(ownerUid: String): Flow<List<Building>>
 }
