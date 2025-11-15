@@ -48,6 +48,15 @@ dependencies {
 
     ksp "androidx.room:room-compiler:$room_version"
 
+    // Compose Navigation
+    implementation(libs.androidx.navigation.compose)
+
+    // Compose
+    implementation(platform(libs.androidx.compose.bom))
+    implementation(libs.androidx.compose.material3)
+    implementation(libs.androidx.compose.ui)
+    implementation(libs.androidx.activity.compose)
+
     // BoM
     implementation(platform(libs.firebase.bom))
 
