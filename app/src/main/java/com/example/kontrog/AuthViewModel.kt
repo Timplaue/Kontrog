@@ -3,62 +3,90 @@ package com.example.kontrog
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.kontrog.data.AuthRepository // 🔑 Импортируем репозиторий
+import com.example.kontrog.data.AuthRepository
+import com.example.kontrog.data.models.User
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 
-// Состояния, которые будет отслеживать UI
 data class AuthState(
     val isAuthenticated: Boolean = false,
-    val role: String? = null,
+    val user: User? = null,
     val isLoading: Boolean = false,
-    val error: String? = null
+    val error: String? = null,
+    val needsPhoneVerification: Boolean = false
 )
 
 class AuthViewModel(
-    // 🔑 Использование AuthRepository
     private val repository: AuthRepository = AuthRepository()
 ) : ViewModel() {
 
-    private val auth = Firebase.auth
-    // db больше не нужен, так как работа с Firestore перенесена в Repository
-
+    private val auth: FirebaseAuth = Firebase.auth
     private val _authState = MutableStateFlow(AuthState(isLoading = true))
-    val authState: StateFlow<AuthState> = _authState
+    val authState: StateFlow<AuthState> = _authState.asStateFlow()
 
     init {
         checkCurrentUser()
     }
 
     private fun checkCurrentUser() {
-        if (auth.currentUser != null) {
-            fetchUserRole(auth.currentUser!!.uid)
+        val currentUser = auth.currentUser
+        if (currentUser != null) {
+            fetchUserData(currentUser.uid)
         } else {
             _authState.value = AuthState(isAuthenticated = false, isLoading = false)
         }
     }
 
     // ================== РЕГИСТРАЦИЯ ==================
-    fun register(email: String, password: String, phone: String) = viewModelScope.launch {
+    fun register(
+        email: String,
+        password: String,
+        phone: String,
+        fullName: String = "",
+        position: String = "",
+        organizationId: String = "",
+        responsibilityType: String = ""
+    ) = viewModelScope.launch {
         _authState.value = _authState.value.copy(isLoading = true, error = null)
 
         try {
+            if (repository.checkPhoneExists(phone)) {
+                throw Exception("Этот номер телефона уже зарегистрирован")
+            }
+
             val result = auth.createUserWithEmailAndPassword(email, password).await()
             val userId = result.user?.uid ?: throw Exception("UID is null after registration.")
 
-            // 🔑 1. Вызываем метод репозитория для создания записи в Firestore
-            repository.createUserRecord(userId, email, phone)
+            repository.createUserRecord(
+                userId = userId,
+                email = email,
+                phone = phone,
+                fullName = fullName,
+                position = position,
+                organizationId = organizationId,
+                responsibilityType = responsibilityType
+            )
 
-            _authState.value = AuthState(isAuthenticated = true, role = "user", isLoading = false)
+            fetchUserData(userId)
 
         } catch (e: Exception) {
-            // Если ошибка регистрации, удаляем пользователя (на всякий случай, если он был создан в Auth, но не в Firestore)
-            auth.currentUser?.delete()
-            _authState.value = AuthState(isAuthenticated = false, isLoading = false, error = e.localizedMessage)
+            try {
+                auth.currentUser?.delete()?.await()
+            } catch (deleteException: Exception) {
+                Log.e("AuthViewModel", "Failed to delete user after error", deleteException)
+            }
+
+            _authState.value = AuthState(
+                isAuthenticated = false,
+                isLoading = false,
+                error = e.localizedMessage ?: "Ошибка регистрации"
+            )
             Log.e("AuthViewModel", "Registration failed", e)
         }
     }
@@ -71,31 +99,73 @@ class AuthViewModel(
             val result = auth.signInWithEmailAndPassword(email, password).await()
             val userId = result.user?.uid ?: throw Exception("UID is null after sign in.")
 
-            fetchUserRole(userId)
+            fetchUserData(userId)
 
         } catch (e: Exception) {
-            _authState.value = AuthState(isAuthenticated = false, isLoading = false, error = e.localizedMessage)
+            _authState.value = AuthState(
+                isAuthenticated = false,
+                isLoading = false,
+                error = e.localizedMessage ?: "Ошибка входа"
+            )
             Log.e("AuthViewModel", "Sign in failed", e)
         }
     }
 
-    // ================== ЗАГРУЗКА РОЛИ ==================
-    private fun fetchUserRole(userId: String) = viewModelScope.launch {
+    // ================== ЗАГРУЗКА ДАННЫХ ПОЛЬЗОВАТЕЛЯ ==================
+    private fun fetchUserData(userId: String) = viewModelScope.launch {
         _authState.value = _authState.value.copy(isLoading = true, error = null)
         try {
-            // 🔑 Вызываем метод репозитория для загрузки роли
-            val role = repository.getUserRole(userId)
-            _authState.value = AuthState(isAuthenticated = true, role = role, isLoading = false)
+            val userData = repository.getUserData(userId)
+
+            if (userData != null) {
+                _authState.value = AuthState(
+                    isAuthenticated = true,
+                    user = userData,
+                    isLoading = false,
+                    needsPhoneVerification = !userData.isPhoneVerified
+                )
+            } else {
+                throw Exception("User record not found in database.")
+            }
 
         } catch (e: Exception) {
-            _authState.value = AuthState(isAuthenticated = false, isLoading = false, error = "Failed to load role: ${e.localizedMessage}")
-            auth.signOut() // Выходим, если не можем загрузить роль
-            Log.e("AuthViewModel", "Error fetching role", e)
+            _authState.value = AuthState(
+                isAuthenticated = false,
+                isLoading = false,
+                error = "Failed to load user data: ${e.localizedMessage}"
+            )
+            auth.signOut()
+            Log.e("AuthViewModel", "Error fetching user data", e)
         }
     }
 
+    // ================== ПОДТВЕРЖДЕНИЕ ТЕЛЕФОНА ==================
+    fun markPhoneVerified() = viewModelScope.launch {
+        try {
+            val userId = auth.currentUser?.uid ?: return@launch
+            repository.markPhoneAsVerified(userId)
+
+            val currentUser = _authState.value.user
+            if (currentUser != null) {
+                _authState.value = _authState.value.copy(
+                    user = currentUser.copy(isPhoneVerified = true),
+                    needsPhoneVerification = false
+                )
+            }
+        } catch (e: Exception) {
+            Log.e("AuthViewModel", "Failed to mark phone as verified", e)
+        }
+    }
+
+    // ================== ВЫХОД ==================
     fun signOut() {
         auth.signOut()
         _authState.value = AuthState(isAuthenticated = false, isLoading = false)
     }
+
+    // ================== ГЕТТЕРЫ ==================
+    fun getPhoneNumber(): String? = _authState.value.user?.phone
+    fun getRole(): String? = _authState.value.user?.role
+    fun getUserId(): String? = auth.currentUser?.uid
+    fun getCurrentUser(): User? = _authState.value.user
 }

@@ -1,4 +1,4 @@
-package com.example.kontrog.ui.screens
+package com.example.kontrog.ui.screens.auth
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
@@ -22,7 +22,7 @@ fun LoginScreen(
     viewModel: AuthViewModel,
     onBack: () -> Unit,
     onRegisterClick: () -> Unit,
-    onLoginSuccess: (String) -> Unit,
+    onLoginSuccess: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     var email by remember { mutableStateOf("") }
@@ -72,12 +72,21 @@ fun LoginScreen(
                 keyboardType = KeyboardType.Email
             )
             Spacer(Modifier.height(24.dp))
+
             KontrogOutlinedTextField(
                 value = password,
                 onValueChange = { password = it },
                 label = "ПАРОЛЬ",
                 isPassword = true
             )
+
+            if (authState.error != null) {
+                Text(
+                    text = authState.error!!,
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.padding(top = 8.dp)
+                )
+            }
 
             Spacer(Modifier.weight(1f))
 
@@ -94,7 +103,10 @@ fun LoginScreen(
                 )
             ) {
                 if (authState.isLoading) {
-                    CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
+                    CircularProgressIndicator(
+                        color = Color.White,
+                        modifier = Modifier.size(24.dp)
+                    )
                 } else {
                     Text(
                         text = "ПРОДОЛЖИТЬ",
@@ -118,8 +130,8 @@ fun LoginScreen(
     }
 
     LaunchedEffect(authState.isAuthenticated) {
-        if (authState.isAuthenticated) {
-            onLoginSuccess(authState.role ?: "user")
+        if (authState.isAuthenticated && authState.user != null) {
+            onLoginSuccess()
         }
     }
 }

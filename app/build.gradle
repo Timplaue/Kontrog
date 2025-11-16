@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.gms)
     alias(libs.plugins.crashlytics)
+    id 'com.google.devtools.ksp'
 }
 
 android {
@@ -41,6 +42,30 @@ android {
 }
 
 dependencies {
+    def room_version = "2.8.3"
+
+    implementation "androidx.room:room-runtime:$room_version"
+
+    ksp "androidx.room:room-compiler:$room_version"
+
+    implementation("com.google.firebase:firebase-auth-ktx")
+
+    // Compose Navigation
+    implementation(libs.androidx.navigation.compose)
+
+    implementation 'com.yandex.android:maps.mobile:4.25.0-lite'
+
+    //gigachat
+    implementation("com.squareup.okhttp3:okhttp:4.11.0")
+    implementation "com.squareup.moshi:moshi:1.15.2"
+    implementation "com.squareup.moshi:moshi-kotlin:1.15.2"
+
+    // Compose
+    implementation(platform(libs.androidx.compose.bom))
+    implementation(libs.androidx.compose.material3)
+    implementation(libs.androidx.compose.material.icons.extended)
+    implementation(libs.androidx.compose.ui)
+    implementation(libs.androidx.activity.compose)
 
     // BoM
     implementation(platform(libs.firebase.bom))
