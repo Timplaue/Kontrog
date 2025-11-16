@@ -1,3 +1,4 @@
+// AuthScreen.kt
 package com.example.kontrog.ui.screens.auth
 
 import androidx.compose.foundation.Image
@@ -25,14 +26,14 @@ sealed class AuthRoutes {
 
 @Composable
 fun AuthScreen(
-    onAuthSuccess: (String) -> Unit, // теперь передаём телефон
+    onAuthSuccess: () -> Unit,
     viewModel: AuthViewModel = viewModel()
 ) {
     val authState by viewModel.authState.collectAsState()
 
-    // Если пользователь уже авторизован и есть телефон — сразу переходим
-    if (authState.isAuthenticated && !authState.phoneNumber.isNullOrEmpty()) {
-        onAuthSuccess(authState.phoneNumber!!)
+    // Если пользователь уже авторизован — сразу переходим
+    if (authState.isAuthenticated && authState.user != null) {
+        onAuthSuccess()
         return
     }
 
@@ -47,18 +48,18 @@ fun AuthScreen(
             viewModel = viewModel,
             onBack = { currentScreen = AuthRoutes.SELECTION },
             onRegisterClick = { currentScreen = AuthRoutes.REGISTER },
-            onLoginSuccess = { phone ->
-                // Передаем телефон для 2FA
-                onAuthSuccess(phone)
+            onLoginSuccess = {
+                // После успешного логина переходим в основное приложение
+                onAuthSuccess()
             }
         )
         AuthRoutes.REGISTER -> RegistrationScreen(
             viewModel = viewModel,
             onBack = { currentScreen = AuthRoutes.SELECTION },
             onLoginClick = { currentScreen = AuthRoutes.LOGIN },
-            onRegistrationSuccess = { phone ->
-                // Передаем телефон для 2FA
-                onAuthSuccess(phone)
+            onRegistrationSuccess = {
+                // После успешной регистрации переходим в основное приложение
+                onAuthSuccess()
             }
         )
     }

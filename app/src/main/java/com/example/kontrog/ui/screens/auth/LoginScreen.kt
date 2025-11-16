@@ -1,3 +1,4 @@
+// LoginScreen.kt
 package com.example.kontrog.ui.screens.auth
 
 import androidx.compose.foundation.layout.*
@@ -15,7 +16,6 @@ import androidx.compose.ui.unit.sp
 import com.example.kontrog.AuthViewModel
 import com.example.kontrog.ui.components.KontrogOutlinedTextField
 import com.example.kontrog.ui.theme.KontrogRed
-import android.util.Log
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -23,7 +23,7 @@ fun LoginScreen(
     viewModel: AuthViewModel,
     onBack: () -> Unit,
     onRegisterClick: () -> Unit,
-    onLoginSuccess: (String) -> Unit,
+    onLoginSuccess: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     var email by remember { mutableStateOf("") }
@@ -73,12 +73,21 @@ fun LoginScreen(
                 keyboardType = KeyboardType.Email
             )
             Spacer(Modifier.height(24.dp))
+
             KontrogOutlinedTextField(
                 value = password,
                 onValueChange = { password = it },
                 label = "ПАРОЛЬ",
                 isPassword = true
             )
+
+            if (authState.error != null) {
+                Text(
+                    text = authState.error!!,
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.padding(top = 8.dp)
+                )
+            }
 
             Spacer(Modifier.weight(1f))
 
@@ -95,7 +104,10 @@ fun LoginScreen(
                 )
             ) {
                 if (authState.isLoading) {
-                    CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
+                    CircularProgressIndicator(
+                        color = Color.White,
+                        modifier = Modifier.size(24.dp)
+                    )
                 } else {
                     Text(
                         text = "ПРОДОЛЖИТЬ",
@@ -118,15 +130,10 @@ fun LoginScreen(
         }
     }
 
+    // Переход после успешного входа
     LaunchedEffect(authState.isAuthenticated) {
-        if (authState.isAuthenticated) {
-            val phone = viewModel.authState.value.phoneNumber
-
-            if (phone != null) {
-                onLoginSuccess(phone)
-            } else {
-                Log.e("LoginScreen", "User authenticated but phone number is null.")
-            }
+        if (authState.isAuthenticated && authState.user != null) {
+            onLoginSuccess()
         }
     }
 }

@@ -1,3 +1,4 @@
+// PhoneAuthViewModel.kt
 package com.example.kontrog.ui.screens.auth
 
 import android.app.Activity
@@ -15,49 +16,39 @@ import kotlinx.coroutines.flow.asStateFlow
 import java.util.concurrent.TimeUnit
 import java.util.regex.Pattern
 
-// Состояние UI для экрана аутентификации по телефону
 sealed class PhoneAuthUiState {
     object Initial : PhoneAuthUiState()
-    object CodeSent : PhoneAuthUiState() // Код отправлен, ждем ввода
+    object CodeSent : PhoneAuthUiState()
     object Loading : PhoneAuthUiState()
     data class Error(val message: String) : PhoneAuthUiState()
     object Success : PhoneAuthUiState()
 }
 
+/**
+ * ViewModel для верификации телефона через SMS (НЕ создаёт нового пользователя).
+ * Использует linkWithCredential для привязки телефона к существующему аккаунту.
+ */
 class PhoneAuthViewModel : ViewModel() {
 
     private val _uiState = MutableStateFlow<PhoneAuthUiState>(PhoneAuthUiState.Initial)
     val uiState: StateFlow<PhoneAuthUiState> = _uiState.asStateFlow()
 
     private var verificationId: String? = null
-
-    /**
-     * Хранит последний успешно нормализованный номер в E.164 (например "+79991234567"),
-     * пригодный для повторной отправки.
-     */
     var lastSentPhoneNumber: String? = null
         private set
 
     private val E164_PATTERN: Pattern = Pattern.compile("^\\+[1-9]\\d{1,14}\$")
 
-    /**
-     * Нормализует входной номер: убирает пробелы, скобки, тире; преобразует 00xxx -> +xxx;
-     * если нет +, добавляет defaultCountryCode (например "+7").
-     */
     private fun normalizeToE164(raw: String, defaultCountryCode: String = "+7"): String {
         var s = raw.trim()
-        // убрать пробелы, скобки, тире
         s = s.replace("""[\s\-\(\)]""".toRegex(), "")
 
-        // 00 -> +
         if (s.startsWith("00")) {
             s = "+" + s.removePrefix("00")
         }
 
-        // если уже начинается с + — оставляем
         if (s.startsWith("+")) return s
 
-        // иначе добавляем код страны по умолчанию
         return defaultCountryCode + s
     }
 
@@ -66,16 +57,16 @@ class PhoneAuthViewModel : ViewModel() {
     }
 
     /**
-     * Отправка кода на номер. rawPhoneNumber может быть в любом читаемом формате,
-     * функция попытается нормализовать его в E.164.
-     *
-     * defaultCountryCode — код, который будет добавлен если пользователь ввёл локальный номер без "+"
-     * (например "+7" для России). При желании передавайте другой код.
+     * Отправляет код верификации на телефон.
+     * ВАЖНО: Не создаёт нового пользователя в Auth!
      */
-    fun sendVerificationCode(rawPhoneNumber: String, activity: Activity, defaultCountryCode: String = "+7") {
+    fun sendVerificationCode(
+        rawPhoneNumber: String,
+        activity: Activity,
+        defaultCountryCode: String = "+7"
+    ) {
         _uiState.value = PhoneAuthUiState.Loading
 
-        // Нормализуем и валидация
         val phoneNumber = try {
             normalizeToE164(rawPhoneNumber, defaultCountryCode)
         } catch (e: Exception) {
@@ -87,33 +78,38 @@ class PhoneAuthViewModel : ViewModel() {
         if (!isValidE164(phoneNumber)) {
             Log.e("PhoneAuth", "Invalid E.164 format: $phoneNumber")
             _uiState.value = PhoneAuthUiState.Error(
-                "Номер должен быть в формате E.164, например +71234567890. Введено: $rawPhoneNumber"
+                "Номер должен быть в формате E.164, например +71234567890"
             )
             return
         }
 
-        // Сохраняем нормализованный номер для повторных отправок
         lastSentPhoneNumber = phoneNumber
 
         val callbacks = object : PhoneAuthProvider.OnVerificationStateChangedCallbacks() {
 
             override fun onVerificationCompleted(credential: PhoneAuthCredential) {
-                // Автоматическая верификация (например instant verification)
-                Log.d("PhoneAuth", "onVerificationCompleted")
-                signInWithPhoneAuthCredential(credential)
+                Log.d("PhoneAuth", "onVerificationCompleted - Auto verification")
+                linkPhoneCredential(credential)
             }
 
             override fun onVerificationFailed(e: FirebaseException) {
                 Log.e("PhoneAuth", "Verification Failed: ${e.message}", e)
-                _uiState.value = PhoneAuthUiState.Error(e.localizedMessage ?: "Ошибка верификации")
+                _uiState.value = PhoneAuthUiState.Error(
+                    e.localizedMessage ?: "Ошибка отправки кода"
+                )
             }
 
             override fun onCodeSent(id: String, token: PhoneAuthProvider.ForceResendingToken) {
-                // Код отправлен, сохраняем ID и переключаем UI на ввод кода
-                Log.d("PhoneAuth", "onCodeSent: verificationId=$id, phone=$phoneNumber")
+                Log.d("PhoneAuth", "Code sent: verificationId=$id, phone=$phoneNumber")
                 verificationId = id
                 _uiState.value = PhoneAuthUiState.CodeSent
             }
+        }
+
+        val currentUser = Firebase.auth.currentUser
+        if (currentUser == null) {
+            _uiState.value = PhoneAuthUiState.Error("Пользователь не авторизован")
+            return
         }
 
         val options = PhoneAuthOptions.newBuilder(Firebase.auth)
@@ -127,40 +123,54 @@ class PhoneAuthViewModel : ViewModel() {
             PhoneAuthProvider.verifyPhoneNumber(options)
         } catch (e: Exception) {
             Log.e("PhoneAuth", "verifyPhoneNumber exception", e)
-            _uiState.value = PhoneAuthUiState.Error(e.localizedMessage ?: "Не удалось отправить код.")
+            _uiState.value = PhoneAuthUiState.Error(
+                e.localizedMessage ?: "Не удалось отправить код"
+            )
         }
     }
 
-    // 2. ВХОД С УЧЕТНЫМИ ДАННЫМИ
-    fun signIn(code: String) {
+    /**
+     * Верифицирует введённый код и привязывает телефон к аккаунту
+     */
+    fun verifyCode(code: String) {
         val id = verificationId
         if (id == null) {
-            _uiState.value = PhoneAuthUiState.Error("ID верификации отсутствует.")
+            _uiState.value = PhoneAuthUiState.Error("ID верификации отсутствует")
             return
         }
 
         _uiState.value = PhoneAuthUiState.Loading
 
         val credential = PhoneAuthProvider.getCredential(id, code)
-        signInWithPhoneAuthCredential(credential)
+        linkPhoneCredential(credential)
     }
 
-    private fun signInWithPhoneAuthCredential(credential: PhoneAuthCredential) {
-        Firebase.auth.signInWithCredential(credential)
+    /**
+     * Привязывает phone credential к существующему пользователю
+     * (НЕ создаёт нового user в Auth!)
+     */
+    private fun linkPhoneCredential(credential: PhoneAuthCredential) {
+        val currentUser = Firebase.auth.currentUser
+
+        if (currentUser == null) {
+            _uiState.value = PhoneAuthUiState.Error("Пользователь не найден")
+            return
+        }
+
+        currentUser.updatePhoneNumber(credential)
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
+                    Log.d("PhoneAuth", "Phone number linked successfully")
                     _uiState.value = PhoneAuthUiState.Success
                 } else {
-                    val errorMessage = task.exception?.localizedMessage ?: "Неверный код."
-                    _uiState.value = PhoneAuthUiState.Error("Ошибка входа: $errorMessage")
-                    Log.e("PhoneAuth", "Sign In Failed: ${errorMessage}")
+                    val errorMessage = task.exception?.localizedMessage ?: "Неверный код"
+                    Log.e("PhoneAuth", "Phone link failed: $errorMessage")
+                    _uiState.value = PhoneAuthUiState.Error("Ошибка: $errorMessage")
                 }
             }
     }
 
-    // Сброс состояния для повторной попытки
     fun resetState() {
         _uiState.value = PhoneAuthUiState.Initial
-        // Не стираем lastSentPhoneNumber — это удобно для повторной отправки
     }
 }

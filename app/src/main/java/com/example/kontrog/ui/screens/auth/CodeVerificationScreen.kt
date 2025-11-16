@@ -1,3 +1,4 @@
+// CodeVerificationScreen.kt
 package com.example.kontrog.ui.screens.auth
 
 import android.app.Activity
@@ -35,17 +36,17 @@ fun CodeVerificationScreen(
     val fullCode = codeValues.joinToString("")
     val isCodeComplete = fullCode.length == CODE_LENGTH
 
-    // Успешный вход → переход
     LaunchedEffect(uiState) {
         if (uiState is PhoneAuthUiState.Success) {
             onVerificationSuccess()
         }
     }
+
     @OptIn(ExperimentalMaterial3Api::class)
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("ПИН КОД ПОДТВЕРЖДЕНИЯ") },
+                title = { Text("ПОДТВЕРЖДЕНИЕ ТЕЛЕФОНА") },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.surfaceVariant
                 )
@@ -61,14 +62,13 @@ fun CodeVerificationScreen(
             horizontalAlignment = Alignment.Start
         ) {
 
-            // Заголовок + кнопка "Отправить повторно"
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "ВВЕДИТЕ\nПИН КОД ПОДТВЕРЖДЕНИЯ",
+                    text = "ВВЕДИТЕ\nПИН КОД",
                     style = MaterialTheme.typography.titleLarge
                 )
 
@@ -89,7 +89,7 @@ fun CodeVerificationScreen(
 
             Spacer(Modifier.height(32.dp))
 
-            // --- ПОЛЯ ВВОДА КОДА ---
+            // Поля ввода кода
             Row(
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
                 modifier = Modifier.fillMaxWidth()
@@ -158,14 +158,13 @@ fun CodeVerificationScreen(
             Spacer(Modifier.height(16.dp))
 
             Text(
-                text = "ПИН КОД ПОДТВЕРЖДЕНИЯ БЫЛ ОТПРАВЛЕН\nКОД ДЕЙСТВИТЕЛЕН 15 МИНУТ",
+                text = "КОД ОТПРАВЛЕН НА ВАШ НОМЕР\nКОД ДЕЙСТВИТЕЛЕН 15 МИНУТ",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
             Spacer(Modifier.height(48.dp))
 
-            // Загрузка / ошибка / кнопка
             when (uiState) {
                 PhoneAuthUiState.Loading -> {
                     CircularProgressIndicator(
@@ -184,7 +183,7 @@ fun CodeVerificationScreen(
                 else -> {
                     if (isCodeComplete) {
                         Button(
-                            onClick = { viewModel.signIn(fullCode) },
+                            onClick = { viewModel.verifyCode(fullCode) },
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Text("Подтвердить")

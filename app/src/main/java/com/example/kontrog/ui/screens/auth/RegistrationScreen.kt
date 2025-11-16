@@ -1,3 +1,4 @@
+// RegistrationScreen.kt
 package com.example.kontrog.ui.screens.auth
 
 import androidx.compose.foundation.layout.*
@@ -22,16 +23,16 @@ fun RegistrationScreen(
     viewModel: AuthViewModel,
     onBack: () -> Unit,
     onLoginClick: () -> Unit,
-    onRegistrationSuccess: (String) -> Unit
+    onRegistrationSuccess: () -> Unit
 ) {
-    // Состояние для полей ввода
     var email by remember { mutableStateOf("") }
     var phone by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
+    var fullName by remember { mutableStateOf("") }
+    var position by remember { mutableStateOf("") }
 
-    // Состояние для ошибок
-    var passwordError by remember { mutableStateOf<String?>(null) }
+    var validationError by remember { mutableStateOf<String?>(null) }
     val authState by viewModel.authState.collectAsState()
 
     Scaffold(
@@ -70,42 +71,54 @@ fun RegistrationScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
 
-            // Поле Email
             KontrogOutlinedTextField(
                 value = email,
-                onValueChange = { email = it },
+                onValueChange = { email = it; validationError = null },
                 label = "EMAIL",
                 keyboardType = KeyboardType.Email
             )
-            Spacer(Modifier.height(24.dp))
+            Spacer(Modifier.height(16.dp))
 
-            // Поле Номер телефона
             KontrogOutlinedTextField(
                 value = phone,
-                onValueChange = { phone = it },
+                onValueChange = { phone = it; validationError = null },
                 label = "НОМЕР ТЕЛЕФОНА",
-                keyboardType = KeyboardType.Phone // 🔑 Клавиатура для номера
+                keyboardType = KeyboardType.Phone
             )
-            Spacer(Modifier.height(24.dp))
+            Spacer(Modifier.height(16.dp))
 
-            // Поле Пароль
+            KontrogOutlinedTextField(
+                value = fullName,
+                onValueChange = { fullName = it },
+                label = "ПОЛНОЕ ИМЯ (необязательно)",
+                keyboardType = KeyboardType.Text
+            )
+            Spacer(Modifier.height(16.dp))
+
+            KontrogOutlinedTextField(
+                value = position,
+                onValueChange = { position = it },
+                label = "ДОЛЖНОСТЬ (необязательно)",
+                keyboardType = KeyboardType.Text
+            )
+            Spacer(Modifier.height(16.dp))
+
             KontrogOutlinedTextField(
                 value = password,
-                onValueChange = { password = it; passwordError = null },
+                onValueChange = { password = it; validationError = null },
                 label = "ПАРОЛЬ",
                 isPassword = true
             )
-            Spacer(Modifier.height(24.dp))
+            Spacer(Modifier.height(16.dp))
 
-            // Поле Повторите Пароль
             KontrogOutlinedTextField(
                 value = confirmPassword,
-                onValueChange = { confirmPassword = it; passwordError = null },
+                onValueChange = { confirmPassword = it; validationError = null },
                 label = "ПОВТОРИТЕ ПАРОЛЬ",
                 isPassword = true
             )
 
-            // Отображение общей ошибки, если есть
+            // Ошибки
             if (authState.error != null) {
                 Text(
                     text = authState.error!!,
@@ -113,10 +126,9 @@ fun RegistrationScreen(
                     modifier = Modifier.padding(top = 8.dp)
                 )
             }
-            // Отображение ошибки совпадения паролей
-            if (passwordError != null) {
+            if (validationError != null) {
                 Text(
-                    text = passwordError!!,
+                    text = validationError!!,
                     color = MaterialTheme.colorScheme.error,
                     modifier = Modifier.padding(top = 8.dp)
                 )
@@ -126,19 +138,32 @@ fun RegistrationScreen(
 
             Button(
                 onClick = {
-                    if (password != confirmPassword) {
-                        passwordError = "Пароли не совпадают!"
-                    } else if (email.isBlank() || phone.isBlank() || password.isBlank()) {
-                        passwordError = "Заполните все поля!"
-                    } else {
-                        viewModel.register(email, password, phone)
+                    when {
+                        email.isBlank() || phone.isBlank() || password.isBlank() -> {
+                            validationError = "Заполните обязательные поля!"
+                        }
+                        password != confirmPassword -> {
+                            validationError = "Пароли не совпадают!"
+                        }
+                        password.length < 6 -> {
+                            validationError = "Пароль должен содержать минимум 6 символов"
+                        }
+                        else -> {
+                            viewModel.register(
+                                email = email,
+                                password = password,
+                                phone = phone,
+                                fullName = fullName,
+                                position = position
+                            )
+                        }
                     }
                 },
                 enabled = !authState.isLoading,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(bottom = 40.dp)
-                    .defaultMinSize(minHeight = 56.dp), // ← Гарантированная высота!
+                    .padding(bottom = 16.dp)
+                    .defaultMinSize(minHeight = 56.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = KontrogRed,
                     contentColor = Color.White
@@ -147,7 +172,7 @@ fun RegistrationScreen(
                 if (authState.isLoading) {
                     CircularProgressIndicator(
                         color = Color.White,
-                        modifier = Modifier.size(20.dp)  // ← уменьшенный размер индикатора
+                        modifier = Modifier.size(20.dp)
                     )
                 } else {
                     Text(
@@ -157,6 +182,7 @@ fun RegistrationScreen(
                     )
                 }
             }
+
             TextButton(
                 onClick = onLoginClick,
                 modifier = Modifier.padding(bottom = 40.dp)
@@ -170,9 +196,10 @@ fun RegistrationScreen(
         }
     }
 
+    // Переход после успешной регистрации
     LaunchedEffect(authState.isAuthenticated) {
-        if (authState.isAuthenticated) {
-            onRegistrationSuccess(authState.role ?: "user")
+        if (authState.isAuthenticated && authState.user != null) {
+            onRegistrationSuccess()
         }
     }
 }
