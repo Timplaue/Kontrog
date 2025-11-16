@@ -5,19 +5,17 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.kontrog.ui.screens.auth.AuthScreen
-import com.example.kontrog.ui.navigation.AppNavHost
 import com.example.kontrog.ui.screens.auth.CodeVerificationScreen
 import com.example.kontrog.ui.screens.auth.PhoneAuthViewModel
 import com.example.kontrog.ui.theme.KontrogTheme
+import com.example.kontrog.ui.navigation.AppNavHost
 
 object RootDestinations {
     const val AUTH_ROUTE = "auth_root"
@@ -29,69 +27,56 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
         setContent {
             KontrogTheme {
-                val navController = rememberNavController()
+                val rootNavController = rememberNavController()
+
                 val authViewModel: AuthViewModel = viewModel()
                 val phoneAuthViewModel: PhoneAuthViewModel = viewModel()
                 val authState by authViewModel.authState.collectAsState()
 
-                // Определяем стартовый экран на основе статуса аутентификации
-                val startDestination = when {
-                    authState.isLoading -> RootDestinations.AUTH_ROUTE
-                    authState.isAuthenticated && authState.needsPhoneVerification -> {
-                        RootDestinations.PIN_CODE_ROUTE
-                    }
-                    authState.isAuthenticated -> {
-                        RootDestinations.APP_ROUTE
-                    }
-                    else -> RootDestinations.AUTH_ROUTE
-                }
+                // Стартовый маршрут всегда AUTH_ROUTE
+                val startDestination = RootDestinations.AUTH_ROUTE
 
                 NavHost(
-                    navController = navController,
-                    startDestination = startDestination,
-                    modifier = Modifier.fillMaxSize()
+                    navController = rootNavController,
+                    startDestination = startDestination
                 ) {
-                    // 1. ЭКРАН АУТЕНТИФИКАЦИИ (Email/Password)
+
+                    // ------------------- AUTH -------------------
                     composable(RootDestinations.AUTH_ROUTE) {
                         AuthScreen(
+                            viewModel = authViewModel,
                             onAuthSuccess = {
-                                // После успешной авторизации проверяем нужна ли верификация телефона
-                                val currentState = authViewModel.authState.value
-                                if (currentState.needsPhoneVerification) {
-                                    // Отправляем код на телефон
-                                    val phoneNumber = authViewModel.getPhoneNumber()
-                                    if (phoneNumber != null) {
+                                val state = authViewModel.authState.value
+                                if (state.needsPhoneVerification) {
+                                    val phone = authViewModel.getPhoneNumber()
+                                    if (phone != null) {
                                         phoneAuthViewModel.sendVerificationCode(
-                                            phoneNumber,
+                                            phone,
                                             this@MainActivity
                                         )
-                                        navController.navigate(RootDestinations.PIN_CODE_ROUTE) {
-                                            popUpTo(RootDestinations.AUTH_ROUTE) { inclusive = true }
-                                        }
+                                    }
+                                    rootNavController.navigate(RootDestinations.PIN_CODE_ROUTE) {
+                                        popUpTo(RootDestinations.AUTH_ROUTE) { inclusive = true }
                                     }
                                 } else {
-                                    // Телефон уже верифицирован, идём в приложение
-                                    navController.navigate(RootDestinations.APP_ROUTE) {
+                                    rootNavController.navigate(RootDestinations.APP_ROUTE) {
                                         popUpTo(RootDestinations.AUTH_ROUTE) { inclusive = true }
                                     }
                                 }
-                            },
-                            viewModel = authViewModel
+                            }
                         )
                     }
 
-                    // 2. ЭКРАН ВЕРИФИКАЦИИ ТЕЛЕФОНА (2FA)
+                    // ------------------- PIN CODE -------------------
                     composable(RootDestinations.PIN_CODE_ROUTE) {
                         CodeVerificationScreen(
                             viewModel = phoneAuthViewModel,
                             onVerificationSuccess = {
-                                // Помечаем телефон как верифицированный в базе
                                 authViewModel.markPhoneVerified()
-
-                                // Переходим в приложение
-                                navController.navigate(RootDestinations.APP_ROUTE) {
+                                rootNavController.navigate(RootDestinations.APP_ROUTE) {
                                     popUpTo(RootDestinations.AUTH_ROUTE) { inclusive = true }
                                     popUpTo(RootDestinations.PIN_CODE_ROUTE) { inclusive = true }
                                 }
@@ -99,9 +84,9 @@ class MainActivity : ComponentActivity() {
                         )
                     }
 
-                    // 3. ГЛАВНОЕ ПРИЛОЖЕНИЕ
+                    // ------------------- APP -------------------
                     composable(RootDestinations.APP_ROUTE) {
-                        AppNavHost(rootNavController = navController)
+                        AppNavHost(rootNavController)
                     }
                 }
             }

@@ -1,27 +1,24 @@
 package com.example.kontrog.ui.navigation
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
-import androidx.navigation.NavDestination.Companion.hierarchy
-import androidx.navigation.NavGraph.Companion.findStartDestination
-import androidx.navigation.NavHostController
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.navigation.NavDestination.Companion.hierarchy
+import androidx.navigation.NavHostController
 import androidx.navigation.compose.*
-import com.example.kontrog.ui.screens.MapScreen
-import com.example.kontrog.ui.screens.ObjectScreen
-import com.example.kontrog.ui.screens.ProfileScreen
+import com.example.kontrog.ui.screens.*
+import androidx.navigation.NavGraph.Companion.findStartDestination
 
-/* ------------------------------ ROUTES ------------------------------ */
-
+/** ------------------------------ ROUTES ------------------------------ */
 sealed class AppRoute(val route: String) {
-    object Notifications : AppRoute("notifications_route")
-
     object Main : AppRoute("main_tab")
     object Object : AppRoute("object_tab")
     object Map : AppRoute("map_tab")
@@ -29,23 +26,6 @@ sealed class AppRoute(val route: String) {
     object Profile : AppRoute("profile_tab")
 }
 
-/* ------------------------- BOTTOM NAV TABS ------------------------- */
-
-data class BottomTab(
-    val route: String,
-    val icon: ImageVector,
-    val label: String
-)
-
-val bottomTabs = listOf(
-    BottomTab(AppRoute.Main.route, Icons.Default.Home, "Главная"),
-    BottomTab(AppRoute.Object.route, Icons.Default.LocationOn, "Объект"),
-    BottomTab(AppRoute.Map.route, Icons.Default.Home, "Карта"),
-    BottomTab(AppRoute.Docs.route, Icons.Default.Home, "Документы"),
-    BottomTab(AppRoute.Profile.route, Icons.Default.Person, "Профиль")
-)
-
-/* ------------------------------ SCREENS ------------------------------ */
 
 @Composable
 fun StubScreen(title: String) {
@@ -53,50 +33,29 @@ fun StubScreen(title: String) {
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
-        Text(title, style = MaterialTheme.typography.headlineMedium)
+        Text(title, style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.onBackground)
     }
 }
 
-@Composable
-fun NotificationsScreen(navController: NavHostController) {
-    Box(
-        modifier = Modifier.fillMaxSize().padding(16.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text("Экран Уведомлений", style = MaterialTheme.typography.headlineMedium)
-            Spacer(Modifier.height(12.dp))
-            Button(onClick = { navController.popBackStack() }) {
-                Text("Назад")
-            }
-        }
-    }
-}
+/** ------------------------- BOTTOM NAV ------------------------- */
+data class BottomTab(val route: String, val icon: ImageVector, val label: String)
 
-@Composable
-fun MainScreen(rootNav: NavHostController) {
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text("Главный Экран", style = MaterialTheme.typography.headlineMedium)
-            Spacer(Modifier.height(12.dp))
-            Button(onClick = { rootNav.navigate(AppRoute.Notifications.route) }) {
-                Text("Открыть Уведомления")
-            }
-        }
-    }
-}
+val bottomTabs = listOf(
+    BottomTab(AppRoute.Main.route, Icons.Default.Home, "Главная"),
+    BottomTab(AppRoute.Object.route, Icons.Default.LocationOn, "Объект"),
+    BottomTab(AppRoute.Map.route, Icons.Default.Map, "Карта"),
+    BottomTab(AppRoute.Docs.route, Icons.Default.Description, "Документы"),
+    BottomTab(AppRoute.Profile.route, Icons.Default.Person, "Профиль")
+)
 
-/* ---------------------------- NAVIGATION ----------------------------- */
-
+/** ------------------------- NAV HOST ------------------------- */
 @Composable
 fun AppNavHost(rootNavController: NavHostController) {
     val bottomNavController = rememberNavController()
 
     Scaffold(
-        bottomBar = { BottomNavBar(bottomNavController) }
+        bottomBar = { BottomNavBar(bottomNavController) },
+        containerColor = MaterialTheme.colorScheme.background
     ) { innerPadding ->
         NavHost(
             navController = bottomNavController,
@@ -112,16 +71,15 @@ fun AppNavHost(rootNavController: NavHostController) {
     }
 }
 
+/** ------------------------- BOTTOM NAV BAR ------------------------- */
 @Composable
 fun BottomNavBar(navController: NavHostController) {
-    NavigationBar {
+    NavigationBar(containerColor = MaterialTheme.colorScheme.surfaceVariant) {
         val navBackStackEntry by navController.currentBackStackEntryAsState()
         val currentDestination = navBackStackEntry?.destination
 
         bottomTabs.forEach { tab ->
-            val selected = currentDestination?.hierarchy?.any {
-                it.route == tab.route
-            } == true
+            val selected = currentDestination?.hierarchy?.any { it.route == tab.route } == true
 
             NavigationBarItem(
                 icon = { Icon(tab.icon, contentDescription = tab.label) },
@@ -129,9 +87,7 @@ fun BottomNavBar(navController: NavHostController) {
                 selected = selected,
                 onClick = {
                     navController.navigate(tab.route) {
-                        popUpTo(navController.graph.findStartDestination().id) {
-                            saveState = true
-                        }
+                        popUpTo(navController.graph.findStartDestination().id) { saveState = true }
                         launchSingleTop = true
                         restoreState = true
                     }
