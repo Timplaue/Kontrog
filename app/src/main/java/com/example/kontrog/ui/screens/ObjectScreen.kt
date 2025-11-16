@@ -19,10 +19,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.kontrog.data.models.Building
 
-/**
- * 🏢 Экран Реестра Объектов (Зданий).
- * Отображает список зданий, загруженных из Firestore.
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ObjectScreen(
@@ -55,11 +51,9 @@ fun ObjectScreen(
         ) {
             when (val state = uiState) {
                 ObjectListUiState.Loading -> {
-                    // Индикатор загрузки
                     CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
                 }
                 is ObjectListUiState.Error -> {
-                    // Сообщение об ошибке
                     Text(
                         text = state.message,
                         color = MaterialTheme.colorScheme.error,
@@ -68,14 +62,12 @@ fun ObjectScreen(
                 }
                 is ObjectListUiState.Success -> {
                     if (state.buildings.isEmpty()) {
-                        // Пустое состояние
                         Text(
                             text = "Объекты не найдены. Добавьте первый объект!",
                             color = Color.Gray,
                             modifier = Modifier.align(Alignment.Center)
                         )
                     } else {
-                        // Отображение списка объектов
                         ObjectList(buildings = state.buildings)
                     }
                 }
@@ -103,7 +95,6 @@ fun ObjectItem(building: Building) {
         colors = CardDefaults.cardColors(containerColor = Color(0xFF1E1E1E))
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            // 1. Адрес и Тип
             Text(
                 text = building.address,
                 color = Color.White,
@@ -117,7 +108,6 @@ fun ObjectItem(building: Building) {
                 style = MaterialTheme.typography.bodySmall
             )
 
-            // 2. Координаты (для отладки)
             Text(
                 text = "Координаты: L:${building.latitude.format(4)}, G:${building.longitude.format(4)}",
                 color = Color.Gray,
@@ -127,5 +117,4 @@ fun ObjectItem(building: Building) {
     }
 }
 
-// Вспомогательная функция для форматирования Double (для отладки)
 fun Double.format(digits: Int) = "%.${digits}f".format(this)

@@ -21,7 +21,6 @@ fun MainScreenStub() {
     }
 }
 
-// Заглушки для остальных экранов
 @Composable
 fun ObjectScreenStub() {
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {

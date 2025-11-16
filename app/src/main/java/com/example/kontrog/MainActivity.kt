@@ -1,4 +1,3 @@
-// MainActivity.kt
 package com.example.kontrog
 
 import android.os.Bundle
@@ -35,8 +34,6 @@ class MainActivity : ComponentActivity() {
                 val authViewModel: AuthViewModel = viewModel()
                 val phoneAuthViewModel: PhoneAuthViewModel = viewModel()
                 val authState by authViewModel.authState.collectAsState()
-
-                // Стартовый маршрут всегда AUTH_ROUTE
                 val startDestination = RootDestinations.AUTH_ROUTE
 
                 NavHost(

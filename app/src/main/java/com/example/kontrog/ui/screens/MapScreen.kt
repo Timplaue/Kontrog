@@ -34,7 +34,6 @@ fun MapScreen(
     val buildings by viewModel.buildings.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
 
-    // Логируем полученные данные для отладки
     LaunchedEffect(buildings) {
         Log.d("MapScreen", "Buildings received: ${buildings.size}")
         buildings.forEachIndexed { index, building ->
@@ -45,7 +44,6 @@ fun MapScreen(
 
     val mapView = remember {
         MapView(context).apply {
-            // Начальная позиция - Москва
             map.move(
                 com.yandex.mapkit.map.CameraPosition(
                     Point(55.751244, 37.617494),
@@ -61,20 +59,14 @@ fun MapScreen(
         mapView.map.mapObjects.addCollection()
     }
 
-    // Обновляем маркеры при изменении данных из Firebase
     LaunchedEffect(buildings) {
         if (buildings.isNotEmpty()) {
             Log.d("MapScreen", "Updating markers for ${buildings.size} buildings")
 
-            // Очищаем старые маркеры
             markersCollection.clear()
-
-            // Создаем иконку из ресурсов
             val icon = ImageProvider.fromResource(context, R.drawable.placementhome)
 
-            // Добавляем маркеры для каждого здания
             buildings.forEach { building ->
-                // Проверяем, что координаты валидны
                 if (building.latitude != 0.0 && building.longitude != 0.0) {
                     val point = Point(building.latitude, building.longitude)
 
@@ -82,8 +74,8 @@ fun MapScreen(
                     placemark.setIcon(icon)
                     placemark.setIconStyle(
                         IconStyle().apply {
-                            scale = 1.5f // Уменьшил масштаб для лучшего отображения
-                            anchor = android.graphics.PointF(0.5f, 1.0f) // Якорь внизу иконки
+                            scale = 1.5f
+                            anchor = android.graphics.PointF(0.5f, 1.0f)
                         }
                     )
 
@@ -93,7 +85,6 @@ fun MapScreen(
                 }
             }
 
-            // Если есть здания с валидными координатами, центрируем карту на первом
             val validBuildings = buildings.filter { it.latitude != 0.0 && it.longitude != 0.0 }
             if (validBuildings.isNotEmpty()) {
                 val firstBuilding = validBuildings.first()
@@ -124,7 +115,6 @@ fun MapScreen(
         )
     }
 
-    // Управление жизненным циклом карты
     DisposableEffect(LocalLifecycleOwner.current) {
         Log.d("MapScreen", "Starting map")
         MapKitFactory.getInstance().onStart()

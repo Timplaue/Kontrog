@@ -1,4 +1,3 @@
-// AuthScreen.kt
 package com.example.kontrog.ui.screens.auth
 
 import androidx.compose.foundation.Image
@@ -31,7 +30,6 @@ fun AuthScreen(
 ) {
     val authState by viewModel.authState.collectAsState()
 
-    // Если пользователь уже авторизован — сразу переходим
     if (authState.isAuthenticated && authState.user != null) {
         onAuthSuccess()
         return
@@ -49,7 +47,6 @@ fun AuthScreen(
             onBack = { currentScreen = AuthRoutes.SELECTION },
             onRegisterClick = { currentScreen = AuthRoutes.REGISTER },
             onLoginSuccess = {
-                // После успешного логина переходим в основное приложение
                 onAuthSuccess()
             }
         )
@@ -58,7 +55,6 @@ fun AuthScreen(
             onBack = { currentScreen = AuthRoutes.SELECTION },
             onLoginClick = { currentScreen = AuthRoutes.LOGIN },
             onRegistrationSuccess = {
-                // После успешной регистрации переходим в основное приложение
                 onAuthSuccess()
             }
         )

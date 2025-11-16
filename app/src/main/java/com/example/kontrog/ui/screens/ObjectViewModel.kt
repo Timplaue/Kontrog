@@ -13,7 +13,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 
-// Состояния для отображения на экране
 sealed interface ObjectListUiState {
     data object Loading : ObjectListUiState
     data class Success(val buildings: List<Building>) : ObjectListUiState
@@ -32,16 +31,14 @@ class ObjectViewModel(
     }
 
     private fun loadBuildings() {
-        val currentUserId = Firebase.auth.currentUser?.uid ?: return // Проверка авторизации
+        val currentUserId = Firebase.auth.currentUser?.uid ?: return
 
         viewModelScope.launch {
             repository.getAllUserBuildings(currentUserId)
                 .catch { e ->
-                    // Вывод ошибки загрузки данных
                     _uiState.value = ObjectListUiState.Error("Ошибка загрузки объектов: ${e.message}")
                 }
                 .collect { buildingsList ->
-                    // Если данные успешно загружены, обновляем состояние
                     _uiState.value = ObjectListUiState.Success(buildingsList)
                 }
         }

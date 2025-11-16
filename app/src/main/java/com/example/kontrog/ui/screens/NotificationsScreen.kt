@@ -1,6 +1,5 @@
 package com.example.kontrog.ui.screens
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -17,7 +16,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.navigation.NavController
-import com.example.kontrog.ui.screens.ExtinguisherViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

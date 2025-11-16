@@ -1,4 +1,3 @@
-// AuthViewModel.kt
 package com.example.kontrog
 
 import android.util.Log
@@ -57,16 +56,13 @@ class AuthViewModel(
         _authState.value = _authState.value.copy(isLoading = true, error = null)
 
         try {
-            // 1. Проверяем, не занят ли телефон
             if (repository.checkPhoneExists(phone)) {
                 throw Exception("Этот номер телефона уже зарегистрирован")
             }
 
-            // 2. Создаём пользователя в Firebase Auth
             val result = auth.createUserWithEmailAndPassword(email, password).await()
             val userId = result.user?.uid ?: throw Exception("UID is null after registration.")
 
-            // 3. Создаём запись в Firestore
             repository.createUserRecord(
                 userId = userId,
                 email = email,
@@ -77,11 +73,9 @@ class AuthViewModel(
                 responsibilityType = responsibilityType
             )
 
-            // 4. Загружаем данные пользователя
             fetchUserData(userId)
 
         } catch (e: Exception) {
-            // Откатываем Auth если что-то пошло не так
             try {
                 auth.currentUser?.delete()?.await()
             } catch (deleteException: Exception) {
@@ -151,7 +145,6 @@ class AuthViewModel(
             val userId = auth.currentUser?.uid ?: return@launch
             repository.markPhoneAsVerified(userId)
 
-            // Обновляем локальное состояние
             val currentUser = _authState.value.user
             if (currentUser != null) {
                 _authState.value = _authState.value.copy(

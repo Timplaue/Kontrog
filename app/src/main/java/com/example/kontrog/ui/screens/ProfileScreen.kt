@@ -1,4 +1,3 @@
-// ProfileScreen.kt
 package com.example.kontrog.ui.screens
 
 import androidx.compose.foundation.background
@@ -48,7 +47,6 @@ fun ProfileScreen(
         }
     ) { paddingValues ->
 
-        // Отображение загрузки
         if (profileState.isLoading) {
             Box(
                 modifier = Modifier
@@ -61,7 +59,6 @@ fun ProfileScreen(
             return@Scaffold
         }
 
-        // Отображение ошибки
         if (profileState.error != null) {
             Box(
                 modifier = Modifier
@@ -84,7 +81,6 @@ fun ProfileScreen(
             return@Scaffold
         }
 
-        // Основной контент
         val data = profileState.data
 
         Column(
@@ -96,7 +92,6 @@ fun ProfileScreen(
                 .padding(horizontal = 16.dp, vertical = 8.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // --- 1. Аватар и Имя ---
             ProfileHeader(
                 fullName = data.fullName,
                 position = data.position,
@@ -105,7 +100,6 @@ fun ProfileScreen(
             )
             Spacer(modifier = Modifier.height(24.dp))
 
-            // --- 2. Раздел "ДАННЫЕ" ---
             SectionHeader(title = "ДАННЫЕ")
             ProfileInfoRow(label = "ЭЛ.ПОЧТА", value = data.email)
             ProfileInfoRow(label = "ТЕЛЕФОН", value = data.phone)
@@ -116,7 +110,6 @@ fun ProfileScreen(
             )
             Spacer(modifier = Modifier.height(24.dp))
 
-            // --- 3. Раздел "СТАТИСТИКА" ---
             SectionHeader(title = "СТАТИСТИКА")
             ProfileStatRow(
                 label = "ПРИВЯЗАННЫЕ ОБЪЕКТЫ",
@@ -136,13 +129,11 @@ fun ProfileScreen(
             )
             Spacer(modifier = Modifier.height(24.dp))
 
-            // --- 4. Раздел "НАСТРОЙКИ" ---
             SectionHeader(title = "НАСТРОЙКИ")
             ProfileNavRow(label = "ВЫБОР КАРТЫ: YANDEX", onClick = { /* TODO */ })
             ProfileNavRow(label = "ОФЛАЙН-СИНХРОНИЗАЦИЯ: ВКЛ", onClick = { /* TODO */ })
             ProfileNavRow(label = "СМЕНИТЬ PIN", onClick = { /* TODO */ })
 
-            // --- 5. Кнопка ВЫЙТИ ---
             ProfileNavRow(
                 label = "ВЫЙТИ",
                 isLogout = true,
@@ -173,10 +164,6 @@ fun ProfileScreen(
     }
 }
 
-// --------------------------------------------------------
-// --- Вспомогательные Composable функции ---
-// --------------------------------------------------------
-
 @Composable
 fun ProfileHeader(
     fullName: String,
@@ -185,7 +172,6 @@ fun ProfileHeader(
     onAvatarChange: () -> Unit
 ) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        // Заглушка для Аватара
         Box(
             modifier = Modifier
                 .size(90.dp)

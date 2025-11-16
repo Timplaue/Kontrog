@@ -1,4 +1,3 @@
-// RegistrationScreen.kt
 package com.example.kontrog.ui.screens.auth
 
 import androidx.compose.foundation.layout.*
@@ -118,7 +117,6 @@ fun RegistrationScreen(
                 isPassword = true
             )
 
-            // Ошибки
             if (authState.error != null) {
                 Text(
                     text = authState.error!!,
@@ -196,7 +194,6 @@ fun RegistrationScreen(
         }
     }
 
-    // Переход после успешной регистрации
     LaunchedEffect(authState.isAuthenticated) {
         if (authState.isAuthenticated && authState.user != null) {
             onRegistrationSuccess()

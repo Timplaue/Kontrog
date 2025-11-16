@@ -1,4 +1,3 @@
-//MainScreen
 package com.example.kontrog.ui.screens
 
 import androidx.compose.foundation.background
@@ -19,8 +18,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavController
-import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import com.example.kontrog.data.models.Building
 import com.example.kontrog.data.models.FireExtinguisher
@@ -36,22 +33,14 @@ import java.time.LocalDateTime
 import java.time.ZoneId
 import java.util.concurrent.TimeUnit
 
-// --------------------------------------------------------
-// --- Вспомогательные функции даты/времени ---
-// --------------------------------------------------------
-
-/**
- * Форматирует Long (Timestamp) в нужный строковый формат "ДД.ММ.ГГ ЧЧ:ММ"
- */
 fun Long.toFormattedDateTime(): String {
     if (this == 0L) return ""
-    // Используем системный часовой пояс для конвертации
     val localDateTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(this), ZoneId.systemDefault())
     return String.format(
         "%02d.%02d.%d %02d:%02d",
         localDateTime.dayOfMonth,
         localDateTime.monthValue,
-        localDateTime.year % 100, // Последние 2 цифры года
+        localDateTime.year % 100,
         localDateTime.hour,
         localDateTime.minute
     )
@@ -82,10 +71,8 @@ class ExtinguisherViewModel : ViewModel() {
 
     private fun loadExtinguisherData() {
         viewModelScope.launch {
-            // Имитация задержки загрузки
             delay(500)
 
-            // --- Фейковые данные ---
             val fakeResponsibleUser = User(
                 id = "u1",
                 fullName = "Иванов И.И.",
@@ -101,7 +88,6 @@ class ExtinguisherViewModel : ViewModel() {
 
             val now = System.currentTimeMillis()
 
-            // 1. Просроченный (для скриншота)
             val expiredExtinguisher = FireExtinguisher(
                 id = "e1",
                 buildingId = fakeBuilding.id,
@@ -115,7 +101,6 @@ class ExtinguisherViewModel : ViewModel() {
                 status = "Expired"
             )
 
-            // 2. Скоро истекает (для уведомлений)
             val soonExpiredExtinguisher = expiredExtinguisher.copy(
                 id = "e2",
                 inventoryNumber = "ЭКЦ-0000000001",
@@ -125,7 +110,6 @@ class ExtinguisherViewModel : ViewModel() {
                 status = "SoonExpired"
             )
 
-            // 3. В норме
             val okExtinguisher = expiredExtinguisher.copy(
                 id = "e3",
                 inventoryNumber = "ЭКЦ-0000000002",
@@ -146,7 +130,6 @@ class ExtinguisherViewModel : ViewModel() {
                 )
             }
 
-            // --- Логика уведомлений ---
             processNotifications(extinguishersList)
         }
     }
@@ -157,23 +140,21 @@ class ExtinguisherViewModel : ViewModel() {
     }
 
     private fun processNotifications(extinguishers: List<FireExtinguisher>) {
-        val notifyDays = listOf(30, 14, 7, 1) // Дни для уведомления
+        val notifyDays = listOf(30, 14, 7, 1)
         val currentNotifications = mutableListOf<String>()
         val now = System.currentTimeMillis()
 
         for (item in extinguishers) {
-            // Проверка просрочки
             if (isExpired(item.nextRechargeDate, item.nextInspectionDate)) {
                 currentNotifications.add("❌ ОГНЕТУШИТЕЛЬ ${item.type} (${item.inventoryNumber}) ПРОСРОЧЕН!")
                 continue
             }
 
-            // Проверка перезарядки
+
             checkNotification(item.nextRechargeDate, now, notifyDays)?.let { days ->
                 currentNotifications.add("⚠️ Срок перезарядки ${item.type} (${item.inventoryNumber}) истекает через $days д.")
             }
 
-            // Проверка освидетельствования
             checkNotification(item.nextInspectionDate, now, notifyDays)?.let { days ->
                 currentNotifications.add("⚠️ Срок освидетельствования ${item.type} (${item.inventoryNumber}) истекает через $days д.")
             }
@@ -185,7 +166,6 @@ class ExtinguisherViewModel : ViewModel() {
         if (dueDate <= now) return null
         val diffDays = TimeUnit.MILLISECONDS.toDays(dueDate - now)
 
-        // Ищем, если разница в днях точно совпадает с одним из порогов уведомления
         return notifyDays.find { it.toLong() == diffDays }
     }
 }
@@ -306,14 +286,14 @@ fun MainScreenTopBar(navController: NavHostController) {
         }
 
         IconButton(
-            onClick = { navController.navigate("notifications") }, // теперь работает
+            onClick = { navController.navigate("notifications") },
             modifier = Modifier.size(48.dp)
         ) {
             Icon(Icons.Default.Notifications, contentDescription = "Уведомления", tint = Color.White)
         }
 
         IconButton(
-            onClick = { navController.navigate(AppRoute.Profile.route) }, // открывает вкладку профиля
+            onClick = { navController.navigate(AppRoute.Profile.route) },
             modifier = Modifier.size(48.dp)
         ) {
             Icon(Icons.Default.Person, contentDescription = "Аккаунт", tint = Color.White)
@@ -407,7 +387,6 @@ fun ExtinguisherCard(item: ExtinguisherListItem) {
                 .fillMaxWidth()
                 .padding(12.dp)
         ) {
-            // 1. Место для изображения
             Box(
                 modifier = Modifier
                     .size(64.dp)
@@ -423,9 +402,8 @@ fun ExtinguisherCard(item: ExtinguisherListItem) {
 
             Spacer(modifier = Modifier.width(12.dp))
 
-            // 2. Основная информация
             Column(modifier = Modifier.weight(1f)) {
-                // Тип
+
                 Text(
                     text = "ОГНЕТУШИТЕЛЬ",
                     color = Color.White,
@@ -437,14 +415,12 @@ fun ExtinguisherCard(item: ExtinguisherListItem) {
                     style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
                 )
 
-                // Здание и адрес
                 Text(
                     text = "${item.building.name} ${item.building.address}",
                     color = Color.LightGray,
                     style = MaterialTheme.typography.bodyMedium
                 )
 
-                // Место установки и инвентарный номер
                 Text(
                     text = "ИНВ. №: ${item.extinguisher.inventoryNumber}",
                     color = Color.Gray,
@@ -456,7 +432,6 @@ fun ExtinguisherCard(item: ExtinguisherListItem) {
                     style = MaterialTheme.typography.bodySmall
                 )
 
-                // Имитация даты последней работы
                 val lastInspectionDate = item.extinguisher.nextInspectionDate - TimeUnit.DAYS.toMillis(365)
                 val lastRechargeDate = item.extinguisher.nextRechargeDate - TimeUnit.DAYS.toMillis(365)
 
@@ -472,9 +447,7 @@ fun ExtinguisherCard(item: ExtinguisherListItem) {
                 )
             }
 
-            // 3. Дата и время статуса
             Column(horizontalAlignment = Alignment.End) {
-                // Дата и время последней активности (имитация)
                 val statusTime = item.extinguisher.dateCommissioned
                 Text(
                     text = statusTime.toFormattedDateTime().substringBefore("."),
@@ -489,7 +462,6 @@ fun ExtinguisherCard(item: ExtinguisherListItem) {
             }
         }
 
-        // 4. Разделитель и статус/Ответственный
         HorizontalDivider(color = Color(0xFF555555), thickness = 1.dp)
 
         Row(
@@ -499,7 +471,6 @@ fun ExtinguisherCard(item: ExtinguisherListItem) {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            // Статус (ПРОСРОЧЕН)
             if (item.isExpired) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Box(
@@ -522,7 +493,6 @@ fun ExtinguisherCard(item: ExtinguisherListItem) {
                 )
             }
 
-            // Ответственный
             Text(
                 text = "ОТВЕТСТВЕННЫЙ: ${item.responsibleUser?.fullName ?: "Не указан"}",
                 color = Color.White,

@@ -1,4 +1,3 @@
-// LoginScreen.kt
 package com.example.kontrog.ui.screens.auth
 
 import androidx.compose.foundation.layout.*
@@ -130,7 +129,6 @@ fun LoginScreen(
         }
     }
 
-    // Переход после успешного входа
     LaunchedEffect(authState.isAuthenticated) {
         if (authState.isAuthenticated && authState.user != null) {
             onLoginSuccess()

@@ -1,4 +1,3 @@
-// PhoneAuthViewModel.kt
 package com.example.kontrog.ui.screens.auth
 
 import android.app.Activity
@@ -24,10 +23,6 @@ sealed class PhoneAuthUiState {
     object Success : PhoneAuthUiState()
 }
 
-/**
- * ViewModel для верификации телефона через SMS (НЕ создаёт нового пользователя).
- * Использует linkWithCredential для привязки телефона к существующему аккаунту.
- */
 class PhoneAuthViewModel : ViewModel() {
 
     private val _uiState = MutableStateFlow<PhoneAuthUiState>(PhoneAuthUiState.Initial)
@@ -55,11 +50,6 @@ class PhoneAuthViewModel : ViewModel() {
     private fun isValidE164(phone: String): Boolean {
         return E164_PATTERN.matcher(phone).matches()
     }
-
-    /**
-     * Отправляет код верификации на телефон.
-     * ВАЖНО: Не создаёт нового пользователя в Auth!
-     */
     fun sendVerificationCode(
         rawPhoneNumber: String,
         activity: Activity,
@@ -129,9 +119,6 @@ class PhoneAuthViewModel : ViewModel() {
         }
     }
 
-    /**
-     * Верифицирует введённый код и привязывает телефон к аккаунту
-     */
     fun verifyCode(code: String) {
         val id = verificationId
         if (id == null) {
@@ -145,10 +132,6 @@ class PhoneAuthViewModel : ViewModel() {
         linkPhoneCredential(credential)
     }
 
-    /**
-     * Привязывает phone credential к существующему пользователю
-     * (НЕ создаёт нового user в Auth!)
-     */
     private fun linkPhoneCredential(credential: PhoneAuthCredential) {
         val currentUser = Firebase.auth.currentUser
 

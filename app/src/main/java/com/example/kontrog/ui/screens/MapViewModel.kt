@@ -18,7 +18,6 @@ class MapViewModel(
     private val repository: FireSafetyRepository = RepositoryProvider.fireSafetyRepository
 ) : ViewModel() {
 
-    // Состояние для хранения списка зданий
     private val _buildings = MutableStateFlow<List<Building>>(emptyList())
     val buildings: StateFlow<List<Building>> = _buildings.asStateFlow()
 
@@ -30,16 +29,7 @@ class MapViewModel(
     }
 
     private fun loadUserBuildings() {
-        // Получаем ID текущего пользователя
-        // Если пользователь не авторизован (null), логика должна быть изменена
-        // в репозитории для временной работы с тестовыми данными.
         val currentUserId = Firebase.auth.currentUser?.uid
-
-        // ВАЖНО: Если аутентификация не настроена, и currentUserId == null,
-        // но Firestore требует UID, загрузка не произойдет.
-        // Для MVP-теста, если вы не вошли в систему, рассмотрите передачу
-        // тестового ID, используемого в Firestore (например, "ORG-TEST-1"),
-        // или временное отключение фильтрации в репозитории.
 
         if (currentUserId == null) {
             Log.w("MapViewModel", "Current user ID is null. Cannot load user-specific buildings.")
@@ -49,12 +39,10 @@ class MapViewModel(
 
         _isLoading.value = true
         viewModelScope.launch {
-            // 💡 КОРРЕКЦИЯ: Включаем рабочую логику загрузки данных из репозитория.
             repository.getAllUserBuildings(currentUserId)
                 .catch { e ->
-                    // Логирование и вывод ошибки загрузки данных
                     Log.e("MapViewModel", "Error loading buildings: ${e.message}", e)
-                    _buildings.value = emptyList() // Очищаем список при ошибке
+                    _buildings.value = emptyList()
                     _isLoading.value = false
                 }
                 .collect { list ->

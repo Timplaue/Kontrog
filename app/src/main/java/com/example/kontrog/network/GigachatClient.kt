@@ -8,12 +8,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.*
 
-/**
- * Клиент для Gigachat API с поддержкой Access Token.
- * Сначала запрашивает токен, затем может отправлять сообщения.
- */
 class GigachatClient(
-    private val authorizationKey: String, // твой ключ вида MDE5YThhY2Ut...
+    private val authorizationKey: String,
     private val clientId: String = "019a8ace-6124-7f42-8b3c-cda182c21dc3"
 ) {
 
@@ -22,7 +18,6 @@ class GigachatClient(
 
     private var accessToken: String? = null
 
-    /** Получаем Access Token (действует 30 минут) */
     private suspend fun getAccessToken(): String = withContext(Dispatchers.IO) {
         // Если токен уже есть, возвращаем его
         accessToken?.let { return@withContext it }
@@ -45,7 +40,6 @@ class GigachatClient(
             if (!response.isSuccessful) throw Exception("Ошибка получения токена: ${response.code}")
             val body = response.body?.string() ?: throw Exception("Пустой ответ при получении токена")
 
-            // Парсим JSON
             val adapter = moshi.adapter(AccessTokenResponse::class.java)
             val tokenResponse = adapter.fromJson(body)
                 ?: throw Exception("Не удалось распарсить Access Token")

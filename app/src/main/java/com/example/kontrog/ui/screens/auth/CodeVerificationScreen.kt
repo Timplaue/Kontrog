@@ -1,4 +1,3 @@
-// CodeVerificationScreen.kt
 package com.example.kontrog.ui.screens.auth
 
 import android.app.Activity
