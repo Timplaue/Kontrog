@@ -55,6 +55,11 @@ dependencies {
 
     implementation 'com.yandex.android:maps.mobile:4.25.0-lite'
 
+    //gigachat
+    implementation("com.squareup.okhttp3:okhttp:4.11.0")
+    implementation "com.squareup.moshi:moshi:1.15.2"
+    implementation "com.squareup.moshi:moshi-kotlin:1.15.2"
+
     // Compose
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.material3)

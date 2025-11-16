@@ -68,6 +68,12 @@ fun AppNavHost(rootNavController: NavHostController) {
             composable(AppRoute.Docs.route) { StubScreen("Документы") }
             composable(AppRoute.Profile.route) { ProfileScreen(bottomNavController) }
             composable("notifications") { NotificationsScreen(bottomNavController) }
+            composable("chat") {
+                ChatScreen(
+                    navController = bottomNavController, // передаём правильный NavController
+                    authorizationKey = "MDE5YThhY2UtNjEyNC03ZjQyLThiM2MtY2RhMTgyYzIxZGMzOjY4ZGExZjI2LWMzMzUtNGIyZi1hYjRjLTVlZGUyNTY0MTRkMQ=="
+                )
+            }
         }
     }
 }

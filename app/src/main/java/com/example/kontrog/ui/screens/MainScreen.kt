@@ -318,6 +318,12 @@ fun MainScreenTopBar(navController: NavHostController) {
         ) {
             Icon(Icons.Default.Person, contentDescription = "Аккаунт", tint = Color.White)
         }
+        IconButton(
+            onClick = { navController.navigate("chat") },
+            modifier = Modifier.size(48.dp)
+        ) {
+            Icon(Icons.Default.Chat, contentDescription = "Чат")
+        }
     }
 }
 
