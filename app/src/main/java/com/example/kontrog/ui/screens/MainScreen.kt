@@ -21,9 +21,11 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.NavHostController
 import com.example.kontrog.data.models.Building
 import com.example.kontrog.data.models.FireExtinguisher
 import com.example.kontrog.data.models.User
+import com.example.kontrog.ui.navigation.AppRoute
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -193,15 +195,14 @@ class ExtinguisherViewModel : ViewModel() {
 // --------------------------------------------------------
 
 @Composable
-fun MainScreen(navController: NavController) {
-    val role = "user"
+fun MainScreen(navController: NavHostController) {
     var selectedTab by remember { mutableStateOf(MainTab.Extinguishers) } // Начинаем со Средств ПБ
 
     Scaffold(
         topBar = {
-            MainScreenTopBar(navController, role)
+            MainScreenTopBar(navController)
         },
-        containerColor = Color.Black // Черный фон
+        containerColor = Color.Black
     ) { paddingValues ->
         Column(
             modifier = Modifier
@@ -287,7 +288,7 @@ fun TabButton(
 // --------------------------------------------------------
 
 @Composable
-fun MainScreenTopBar(navController: NavController, role: String) {
+fun MainScreenTopBar(navController: NavHostController) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -298,28 +299,21 @@ fun MainScreenTopBar(navController: NavController, role: String) {
         SearchField(modifier = Modifier.weight(1f))
 
         IconButton(
-            onClick = { /* TODO: Открыть фильтр */ },
+            onClick = { /* TODO: открыть фильтр */ },
             modifier = Modifier.size(48.dp)
         ) {
             Icon(Icons.Default.Tune, contentDescription = "Фильтр", tint = Color.White)
         }
 
         IconButton(
-            onClick = { navController.navigate("notifications") }, // Имитация маршрута уведомлений
+            onClick = { navController.navigate("notifications") }, // теперь работает
             modifier = Modifier.size(48.dp)
         ) {
             Icon(Icons.Default.Notifications, contentDescription = "Уведомления", tint = Color.White)
         }
 
         IconButton(
-            onClick = {
-                // Предполагаем, что "profile" - это маршрут для Аккаунта/Профиля
-                navController.navigate("profile") {
-                    popUpTo(navController.graph.findStartDestination().id) { saveState = true }
-                    launchSingleTop = true
-                    restoreState = true
-                }
-            },
+            onClick = { navController.navigate(AppRoute.Profile.route) }, // открывает вкладку профиля
             modifier = Modifier.size(48.dp)
         ) {
             Icon(Icons.Default.Person, contentDescription = "Аккаунт", tint = Color.White)

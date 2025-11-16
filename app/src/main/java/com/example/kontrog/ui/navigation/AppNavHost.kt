@@ -26,7 +26,7 @@ sealed class AppRoute(val route: String) {
     object Profile : AppRoute("profile_tab")
 }
 
-
+/** ------------------------- STUB SCREEN ------------------------- */
 @Composable
 fun StubScreen(title: String) {
     Box(
@@ -62,11 +62,12 @@ fun AppNavHost(rootNavController: NavHostController) {
             startDestination = AppRoute.Main.route,
             modifier = Modifier.padding(innerPadding)
         ) {
-            composable(AppRoute.Main.route) { MainScreen(rootNavController) }
-            composable(AppRoute.Object.route) { ObjectScreen(rootNavController) }
-            composable(AppRoute.Map.route) { MapScreen(rootNavController) }
+            composable(AppRoute.Main.route) { MainScreen(bottomNavController) }
+            composable(AppRoute.Object.route) { ObjectScreen(bottomNavController) }
+            composable(AppRoute.Map.route) { MapScreen(bottomNavController) }
             composable(AppRoute.Docs.route) { StubScreen("Документы") }
-            composable(AppRoute.Profile.route) { ProfileScreen(rootNavController) }
+            composable(AppRoute.Profile.route) { ProfileScreen(bottomNavController) }
+            composable("notifications") { NotificationsScreen(bottomNavController) }
         }
     }
 }
