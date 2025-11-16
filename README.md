@@ -24,10 +24,9 @@
 
 | Главный экран (Дашборд) | Список огнетушителей | Карточка огнетушителя |
 | :-----------------------: | :-----------------------: | :-----------------------: |
-| 
+<img width="375" height="812" alt="Frame 2087324837" src="https://github.com/user-attachments/assets/c91fe4fa-85f7-47ec-912d-cf22f11df850" />
+<img width="375" height="812" alt="Frame 2087324803" src="https://github.com/user-attachments/assets/08dbc8c5-ba02-4f20-99f0-b932bbbbf08b" />
 
-[Image of Main Dashboard]
- |  |  |
 
 ---
 
@@ -76,4 +75,4 @@
 
 ---
 
-Разработано: **[Ваше Имя/Название Команды]**
+Разработано: **[Timplay/MYPSI]**
